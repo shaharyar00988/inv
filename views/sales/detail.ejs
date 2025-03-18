@@ -1,0 +1,254 @@
+<%- include('../partials/header') %>
+
+<div class="container-fluid">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Sale Details</h2>
+    <div>
+      <% if (sale) { %>
+        <div class="btn-group me-2">
+          <a href="/invoices/sales/<%= sale.id %>/normal" target="_blank" class="btn btn-primary">
+            <i class="bi bi-printer"></i> Print Invoice
+          </a>
+          <a href="/invoices/sales/<%= sale.id %>/thermal" target="_blank" class="btn btn-outline-primary">
+            <i class="bi bi-receipt"></i> Thermal Receipt
+          </a>
+        </div>
+      <% } %>
+      <a href="/sales" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i> Back to Sales
+      </a>
+    </div>
+  </div>
+  
+  <% if (typeof error !== 'undefined' && error) { %>
+    <div class="alert alert-danger" role="alert">
+      <%= error %>
+    </div>
+  <% } %>
+  
+  <% if (sale) { %>
+    <div class="row">
+      <!-- Sale Info -->
+      <div class="col-md-4">
+        <div class="card mb-4">
+          <div class="card-header">
+            <h5 class="mb-0">Sale Information</h5>
+          </div>
+          <div class="card-body">
+            <div class="mb-3">
+              <h6 class="text-muted mb-1">Invoice Number</h6>
+              <p class="mb-0 fw-bold"><%= sale.invoiceNo || `INV-${sale.id}` %></p>
+            </div>
+            
+            <div class="mb-3">
+              <h6 class="text-muted mb-1">Date</h6>
+              <p class="mb-0"><%= new Date(sale.date).toLocaleDateString() %></p>
+            </div>
+            
+            <div class="mb-3">
+              <h6 class="text-muted mb-1">Customer</h6>
+              <p class="mb-0"><%= sale.customer ? sale.customer.name : 'Walk-in Customer' %></p>
+            </div>
+            
+            <div class="mb-3">
+              <h6 class="text-muted mb-1">Worker</h6>
+              <p class="mb-0"><%= sale.worker ? sale.worker.name : 'N/A' %></p>
+            </div>
+            
+            <% if (sale.notes) { %>
+              <div class="mb-3">
+                <h6 class="text-muted mb-1">Notes</h6>
+                <p class="mb-0"><%= sale.notes %></p>
+              </div>
+            <% } %>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Payment Info -->
+      <div class="col-md-4">
+        <div class="card mb-4">
+          <div class="card-header">
+            <h5 class="mb-0">Payment Information</h5>
+          </div>
+          <div class="card-body">
+            <div class="mb-3">
+              <h6 class="text-muted mb-1">Total Amount</h6>
+              <p class="mb-0">Rs. <%= sale.totalAmount.toFixed(2) %></p>
+            </div>
+            
+            <div class="mb-3">
+              <h6 class="text-muted mb-1">Discount</h6>
+              <p class="mb-0">Rs. <%= sale.discount.toFixed(2) %></p>
+            </div>
+            
+            <div class="mb-3">
+              <h6 class="text-muted mb-1">Net Amount</h6>
+              <p class="mb-0 fw-bold">Rs. <%= sale.netAmount.toFixed(2) %></p>
+            </div>
+            
+            <div class="mb-3">
+              <h6 class="text-muted mb-1">Amount Paid</h6>
+              <p class="mb-0">Rs. <%= sale.amountPaid.toFixed(2) %></p>
+            </div>
+            
+            <div class="mb-3">
+              <h6 class="text-muted mb-1">Balance</h6>
+              <p class="mb-0 <%= (sale.netAmount - sale.amountPaid) > 0 ? 'text-danger' : '' %>">
+                Rs. <%= (sale.netAmount - sale.amountPaid).toFixed(2) %>
+              </p>
+            </div>
+            
+            <div class="mb-0">
+              <h6 class="text-muted mb-1">Status</h6>
+              <% if (sale.amountPaid >= sale.netAmount) { %>
+                <span class="badge bg-success">Paid</span>
+              <% } else if (sale.amountPaid > 0) { %>
+                <span class="badge bg-warning">Partial</span>
+              <% } else { %>
+                <span class="badge bg-danger">Unpaid</span>
+              <% } %>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Customer Info -->
+      <% if (sale.customer) { %>
+        <div class="col-md-4">
+          <div class="card mb-4">
+            <div class="card-header">
+              <h5 class="mb-0">Customer Information</h5>
+            </div>
+            <div class="card-body">
+              <div class="mb-3">
+                <h6 class="text-muted mb-1">Name</h6>
+                <p class="mb-0"><%= sale.customer.name %></p>
+              </div>
+              
+              <% if (sale.customer.address) { %>
+                <div class="mb-3">
+                  <h6 class="text-muted mb-1">Address</h6>
+                  <p class="mb-0"><%= sale.customer.address %></p>
+                </div>
+              <% } %>
+              
+              <% if (sale.customer.number) { %>
+                <div class="mb-3">
+                  <h6 class="text-muted mb-1">Phone Number</h6>
+                  <p class="mb-0"><%= sale.customer.number %></p>
+                </div>
+              <% } %>
+              
+              <div class="mb-0">
+                <h6 class="text-muted mb-1">Current Balance</h6>
+                <p class="mb-0 <%= sale.customer.balance > 0 ? 'text-danger' : '' %>">
+                  Rs. <%= sale.customer.balance.toFixed(2) %>
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      <% } %>
+    </div>
+    
+    <!-- Sale Items -->
+    <div class="card">
+      <div class="card-header">
+        <h5 class="mb-0">Sale Items</h5>
+      </div>
+      <div class="card-body">
+        <% if (sale.items && sale.items.length > 0) { %>
+          <!-- Regular Items -->
+          <div class="table-responsive">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Item</th>
+                  <th>Urdu Name</th>
+                  <th>Type</th>
+                  <th>Quantity</th>
+                  <th>Unit Price</th>
+                  <th>Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% 
+                let regularIndex = 1;
+                sale.items.filter(item => !item.isCustom).forEach(item => { 
+                %>
+                  <tr>
+                    <td><%= regularIndex++ %></td>
+                    <td><%= item.inventory.name %></td>
+                    <td><%= item.inventory.urduName || '-' %></td>
+                    <td><span class="badge bg-secondary"><%= item.inventory.type %></span></td>
+                    <td><%= item.quantity %></td>
+                    <td>Rs. <%= item.unitPrice.toFixed(2) %></td>
+                    <td>Rs. <%= item.totalPrice.toFixed(2) %></td>
+                  </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Custom Items -->
+          <% if (sale.items.some(item => item.isCustom)) { %>
+            <h5 class="mt-4 mb-3">Custom Items</h5>
+            <div class="table-responsive">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Item Name</th>
+                    <th>Quantity</th>
+                    <th>Unit Price</th>
+                    <th>Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% 
+                  let customIndex = 1;
+                  sale.items.filter(item => item.isCustom).forEach(item => { 
+                  %>
+                    <tr>
+                      <td><%= customIndex++ %></td>
+                      <td><%= item.customItemName %></td>
+                      <td><%= item.quantity %></td>
+                      <td>Rs. <%= item.unitPrice.toFixed(2) %></td>
+                      <td>Rs. <%= item.totalPrice.toFixed(2) %></td>
+                    </tr>
+                  <% }) %>
+                </tbody>
+              </table>
+            </div>
+          <% } %>
+
+          <!-- Totals Section -->
+          <div class="table-responsive mt-4">
+            <table class="table">
+              <tfoot>
+                <tr>
+                  <td colspan="6" class="text-end fw-bold">Total:</td>
+                  <td class="fw-bold">Rs. <%= sale.totalAmount.toFixed(2) %></td>
+                </tr>
+                <tr>
+                  <td colspan="6" class="text-end">Discount:</td>
+                  <td>Rs. <%= sale.discount.toFixed(2) %></td>
+                </tr>
+                <tr>
+                  <td colspan="6" class="text-end fw-bold">Net Amount:</td>
+                  <td class="fw-bold">Rs. <%= sale.netAmount.toFixed(2) %></td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        <% } else { %>
+          <p class="text-muted text-center my-4">No items found for this sale</p>
+        <% } %>
+      </div>
+    </div>
+  <% } %>
+</div>
+
+<%- include('../partials/footer') %> 

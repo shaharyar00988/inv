@@ -1,0 +1,295 @@
+<%- include('../partials/header') %>
+
+<div class="container-fluid">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Settings</h2>
+  </div>
+  
+  <% if (typeof successMessage !== 'undefined' && successMessage) { %>
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+      <%= successMessage %>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  <% } %>
+  
+  <% if (typeof errorMessage !== 'undefined' && errorMessage) { %>
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+      <%= errorMessage %>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  <% } %>
+  
+  <div class="row">
+    <!-- Shop Details -->
+    <div class="col-md-6">
+      <div class="card mb-4">
+        <div class="card-header">
+          <h5 class="mb-0">Shop Details</h5>
+        </div>
+        <div class="card-body">
+          <form action="/settings/update-shop" method="POST">
+            <div class="mb-3">
+              <label for="shopName" class="form-label">Shop Name</label>
+              <input type="text" class="form-control" id="shopName" name="shopName" value="<%= settings.shopName || '' %>">
+            </div>
+            
+            <div class="mb-3">
+              <label for="address" class="form-label">Address</label>
+              <textarea class="form-control" id="address" name="address" rows="2"><%= settings.address || '' %></textarea>
+            </div>
+            
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label for="phone" class="form-label">Phone Number</label>
+                <input type="text" class="form-control" id="phone" name="phone" value="<%= settings.phone || '' %>">
+              </div>
+              <div class="col-md-6">
+                <label for="email" class="form-label">Email</label>
+                <input type="email" class="form-control" id="email" name="email" value="<%= settings.email || '' %>">
+              </div>
+            </div>
+            
+            <div class="mb-3">
+              <label for="taxId" class="form-label">Tax ID / Registration Number</label>
+              <input type="text" class="form-control" id="taxId" name="taxId" value="<%= settings.taxId || '' %>">
+            </div>
+            
+            <div class="mb-3">
+              <label for="footer" class="form-label">Invoice Footer Text</label>
+              <textarea class="form-control" id="footer" name="footer" rows="2"><%= settings.footer || '' %></textarea>
+              <small class="text-muted">This text will appear at the bottom of invoices</small>
+            </div>
+            
+            <div class="d-grid">
+              <button type="submit" class="btn btn-primary">Save Shop Details</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Logo & Backup/Restore -->
+    <div class="col-md-6">
+      <!-- Logo Upload -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <h5 class="mb-0">Shop Logo</h5>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-4 mb-3">
+              <div class="border p-2 text-center">
+                <% if (settings && settings.shopLogo) { %>
+                  <img src="/uploads/<%= settings.shopLogo %>" alt="Shop Logo" class="img-fluid" style="max-height: 100px;">
+                <% } else { %>
+                  <div class="text-muted py-4">
+                    <i class="bi bi-image" style="font-size: 2rem;"></i>
+                    <p class="mb-0">No logo uploaded</p>
+                  </div>
+                <% } %>
+              </div>
+            </div>
+            <div class="col-md-8">
+              <form action="/settings/upload-logo" method="POST" enctype="multipart/form-data">
+                <div class="mb-3">
+                  <label for="logo" class="form-label">Upload Logo</label>
+                  <input type="file" class="form-control" id="logo" name="logo" accept="image/*" required>
+                  <small class="text-muted">Max file size: 5MB. Supported formats: JPG, PNG, GIF</small>
+                </div>
+                
+                <div class="d-grid">
+                  <button type="submit" class="btn btn-primary">Upload Logo</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Backup & Restore -->
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">Backup & Restore</h5>
+        </div>
+        <div class="card-body">
+          <!-- WhatsApp Connection Status -->
+          <div class="alert alert-info mb-3">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <h6 class="mb-0">WhatsApp Connection</h6>
+                <p class="mb-0 small" id="whatsappStatus">
+                  <% if (isWhatsAppConnected) { %>
+                    <span class="text-success">Connected to WhatsApp</span>
+                  <% } else { %>
+                    <span class="text-warning">Waiting for QR code scan...</span>
+                  <% } %>
+                </p>
+              </div>
+              <div>
+                <% if (isWhatsAppConnected) { %>
+                  <form action="/settings/whatsapp-logout" method="POST" style="display: inline;">
+                    <button type="submit" class="btn btn-danger btn-sm">
+                      <i class="bi bi-power"></i> Disconnect
+                    </button>
+                  </form>
+                <% } %>
+              </div>
+            </div>
+            <!-- QR Code Display -->
+            <div id="qrCodeContainer" class="text-center mt-3" style="display: none;">
+              <canvas id="qrcode"></canvas>
+              <p class="mt-2 small text-muted">Scan this QR code with WhatsApp to connect</p>
+            </div>
+          </div>
+
+          <div class="row">
+            <!-- Local Backup -->
+            <div class="col-md-6 mb-3">
+              <div class="card h-100">
+                <div class="card-body">
+                  <h6 class="card-title">Local Backup</h6>
+                  <p class="card-text small">Create a backup of your database and download it to your computer.</p>
+                  <form action="/settings/backup" method="POST">
+                    <div class="d-grid">
+                      <button type="submit" class="btn btn-success">Create Local Backup</button>
+                    </div>
+                  </form>
+                  <% if (typeof successMessage !== 'undefined' && successMessage && successMessage.includes('Backup created')) { %>
+                    <div class="d-grid mt-2">
+                      <a href="/downloads/backup.sqlite" download="inventory-backup.sqlite" class="btn btn-outline-primary">
+                        <i class="bi bi-download"></i> Download Backup
+                      </a>
+                    </div>
+                  <% } %>
+                </div>
+              </div>
+            </div>
+            
+            <!-- WhatsApp Backup -->
+            <div class="col-md-6 mb-3">
+              <div class="card h-100">
+                <div class="card-body">
+                  <h6 class="card-title">WhatsApp Backup</h6>
+                  <p class="card-text small">Send a backup of your database to any WhatsApp number.</p>
+                  <form action="/settings/backup-to-whatsapp" method="POST">
+                    <div class="mb-3">
+                      <label for="phoneNumber" class="form-label">WhatsApp Number</label>
+                      <div class="input-group">
+                        <span class="input-group-text">+92</span>
+                        <input type="text" class="form-control" id="phoneNumber" name="phoneNumber" 
+                               placeholder="3XX XXXXXXX" pattern="[0-9]{10}" required
+                               title="Please enter 10 digits without country code">
+                      </div>
+                      <small class="text-muted">Enter number without leading zero (e.g., 3001234567)</small>
+                    </div>
+                    <div class="d-grid">
+                      <button type="submit" class="btn btn-success" id="backupToWhatsAppBtn" <%= !isWhatsAppConnected ? 'disabled' : '' %>>
+                        <i class="bi bi-whatsapp"></i> Send Backup via WhatsApp
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Local Restore -->
+            <div class="col-md-6">
+              <div class="card h-100">
+                <div class="card-body">
+                  <h6 class="card-title">Restore from Backup</h6>
+                  <p class="card-text small text-danger">Warning: This will replace your current database with the backup file.</p>
+                  <form action="/settings/restore" method="POST" enctype="multipart/form-data">
+                    <div class="mb-3">
+                      <input type="file" class="form-control form-control-sm" id="backupFile" name="backupFile" accept=".sqlite,.db,.backup" required>
+                    </div>
+                    <div class="d-grid">
+                      <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to restore from backup? This will replace all current data.')">
+                        Restore from Backup
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>
+
+<!-- Add QR Code library before the closing body tag -->
+<script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Check WhatsApp connection status periodically
+  checkWhatsAppStatus();
+  setInterval(checkWhatsAppStatus, 5000);
+  
+  // Format phone number input
+  const phoneInput = document.getElementById('phoneNumber');
+  if (phoneInput) {
+    phoneInput.addEventListener('input', function(e) {
+      // Remove any non-digit characters
+      let value = e.target.value.replace(/\D/g, '');
+      
+      // Remove leading zero if present
+      if (value.startsWith('0')) {
+        value = value.substring(1);
+      }
+      
+      // Limit to 10 digits
+      value = value.substring(0, 10);
+      
+      // Update input value
+      e.target.value = value;
+    });
+  }
+});
+
+async function checkWhatsAppStatus() {
+  try {
+    const response = await fetch('/settings/whatsapp-status');
+    const data = await response.json();
+    
+    const statusElement = document.getElementById('whatsappStatus');
+    const backupButton = document.getElementById('backupToWhatsAppBtn');
+    const qrContainer = document.getElementById('qrCodeContainer');
+    
+    if (data.connected) {
+      statusElement.innerHTML = '<span class="text-success">Connected to WhatsApp</span>';
+      if (backupButton) backupButton.disabled = false;
+      qrContainer.style.display = 'none';
+    } else {
+      statusElement.innerHTML = '<span class="text-warning">Waiting for QR code scan...</span>';
+      if (backupButton) backupButton.disabled = true;
+      
+      // Display QR code if available
+      if (data.qrCode) {
+        qrContainer.style.display = 'block';
+        const qrDiv = document.getElementById('qrcode');
+        qrDiv.innerHTML = ''; // Clear previous QR code
+        
+        // Generate QR code using qrcode.js
+        QRCode.toCanvas(qrDiv, data.qrCode, {
+          width: 256,
+          margin: 2,
+          color: {
+            dark: '#000000',
+            light: '#ffffff'
+          }
+        }, function(error) {
+          if (error) console.error('Error generating QR code:', error);
+        });
+      } else {
+        qrContainer.style.display = 'none';
+      }
+    }
+  } catch (error) {
+    console.error('Error checking WhatsApp status:', error);
+  }
+}
+</script> 

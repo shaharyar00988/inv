@@ -1,0 +1,137 @@
+<%- include('../partials/header') %>
+
+<!-- Add print stylesheet -->
+<link rel="stylesheet" href="/css/print.css">
+
+<div class="container-fluid">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Profit Report</h2>
+    <div class="no-print">
+      <button class="btn btn-primary me-2" onclick="window.print()">
+        <i class="bi bi-printer"></i> Print Report
+      </button>
+      <a href="/reports" class="btn btn-secondary">
+        <i class="bi bi-arrow-left"></i> Back to Reports
+      </a>
+    </div>
+  </div>
+  
+  <!-- Date Filter Form -->
+  <div class="card mb-4 filter-section">
+    <div class="card-body">
+      <form action="/reports/profit" method="GET" class="row g-3">
+        <div class="col-md-4">
+          <label for="startDate" class="form-label">Start Date</label>
+          <input type="date" class="form-control" id="startDate" name="startDate" value="<%= startDate %>">
+        </div>
+        <div class="col-md-4">
+          <label for="endDate" class="form-label">End Date</label>
+          <input type="date" class="form-control" id="endDate" name="endDate" value="<%= endDate %>">
+        </div>
+        <div class="col-md-4 d-flex align-items-end">
+          <button type="submit" class="btn btn-primary">
+            <i class="bi bi-filter"></i> Apply Filter
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+  
+  <!-- Report Header for Print -->
+  <div class="report-header d-none d-print-block">
+    <div class="report-title">Profit Report</div>
+    <div class="report-date">
+      Period: <%= new Date(startDate).toLocaleDateString() %> - <%= new Date(endDate).toLocaleDateString() %>
+    </div>
+  </div>
+  
+  <!-- Summary Cards -->
+  <div class="row mb-4 avoid-break">
+    <div class="col-md-3">
+      <div class="card bg-light">
+        <div class="card-body text-center">
+          <h6 class="card-title">Total Sales</h6>
+          <h3 class="text-primary">Rs. <%= totalSales.toFixed(2) %></h3>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card bg-light">
+        <div class="card-body text-center">
+          <h6 class="card-title">Total Cost</h6>
+          <h3 class="text-danger">Rs. <%= totalCost.toFixed(2) %></h3>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card bg-light">
+        <div class="card-body text-center">
+          <h6 class="card-title">Gross Profit</h6>
+          <h3 class="text-success">Rs. <%= grossProfit.toFixed(2) %></h3>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card bg-light">
+        <div class="card-body text-center">
+          <h6 class="card-title">Profit Margin</h6>
+          <h3 class="text-info"><%= profitMargin.toFixed(2) %>%</h3>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Profit Chart -->
+  <div class="card mb-4 avoid-break">
+    <div class="card-body">
+      <canvas id="profitChart"></canvas>
+    </div>
+  </div>
+  
+  <!-- Profit Table -->
+  <div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <h5 class="mb-0">Daily Profit Breakdown</h5>
+      <button class="btn btn-sm btn-outline-primary no-print" onclick="exportTableToCSV('profit-report.csv')">
+        <i class="bi bi-download"></i> Export to CSV
+      </button>
+    </div>
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table table-striped" id="profitTable">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th class="text-end">Sales</th>
+              <th class="text-end">Cost</th>
+              <th class="text-end">Profit</th>
+              <th class="text-end">Margin</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% dailyProfits.forEach(day => { %>
+              <tr>
+                <td><%= new Date(day.date).toLocaleDateString() %></td>
+                <td class="text-end">Rs. <%= day.sales.toFixed(2) %></td>
+                <td class="text-end">Rs. <%= day.cost.toFixed(2) %></td>
+                <td class="text-end">Rs. <%= day.profit.toFixed(2) %></td>
+                <td class="text-end"><%= day.margin.toFixed(2) %>%</td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Developer Credit -->
+  <div class="developer-credit d-none d-print-block">
+    Developed by Shaharyar • WhatsApp: 03009449098
+  </div>
+</div>
+
+<script>
+// ... existing chart and export code ...
+</script>
+
+<%- include('../partials/footer') %> 

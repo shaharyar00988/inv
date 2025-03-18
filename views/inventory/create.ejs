@@ -1,0 +1,110 @@
+<%- include('../partials/header') %>
+
+<div class="container-fluid">
+  <!-- Page Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-plus-circle me-2"></i>Add New Inventory Item</h2>
+    <a href="/inventory" class="btn btn-outline-secondary">
+      <i class="bi bi-arrow-left me-2"></i>Back to Inventory
+    </a>
+  </div>
+
+  <!-- Alerts -->
+  <% if (typeof errorMessage !== 'undefined' && errorMessage) { %>
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+      <%= errorMessage %>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  <% } %>
+
+  <!-- Create Form -->
+  <div class="card">
+    <div class="card-body">
+      <form action="/inventory/create" method="POST">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <div class="mb-3">
+              <label for="name" class="form-label">Item Name</label>
+              <input type="text" class="form-control" id="name" name="name" required>
+            </div>
+          </div>
+          
+          <div class="col-md-6">
+            <div class="mb-3">
+              <label for="urduName" class="form-label">Urdu Name (Optional)</label>
+              <input type="text" class="form-control" id="urduName" name="urduName">
+            </div>
+          </div>
+          
+          <div class="col-md-6">
+            <div class="mb-3">
+              <label for="type" class="form-label">Category</label>
+              <input type="text" class="form-control" id="type" name="type" required list="categories">
+              <datalist id="categories">
+                <option value="Electronics">
+                <option value="Clothing">
+                <option value="Food">
+                <option value="Beverages">
+                <option value="Household">
+                <option value="Stationery">
+                <option value="service">
+                <option value="Other">
+              </datalist>
+            </div>
+          </div>
+          
+          <div class="col-md-6">
+            <div class="mb-3">
+              <label for="stock" class="form-label">Initial Stock</label>
+              <input type="number" class="form-control" id="stock" name="stock" min="0" value="0" required>
+              <small class="form-text text-muted">For services, you can leave this as 0.</small>
+            </div>
+          </div>
+          
+          <div class="col-md-6">
+            <div class="mb-3">
+              <label for="purchasePrice" class="form-label">Purchase Price (Rs.)</label>
+              <input type="number" class="form-control" id="purchasePrice" name="purchasePrice" min="0" step="0.01" required>
+            </div>
+          </div>
+          
+          <div class="col-md-6">
+            <div class="mb-3">
+              <label for="retailPrice" class="form-label">Retail Price (Rs.)</label>
+              <input type="number" class="form-control" id="retailPrice" name="retailPrice" min="0" step="0.01" required>
+            </div>
+          </div>
+          
+          <div class="col-12 mt-4">
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-plus-circle me-2"></i>Add Item
+            </button>
+            <a href="/inventory" class="btn btn-outline-secondary ms-2">Cancel</a>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Calculate retail price based on purchase price with markup
+  document.getElementById('purchasePrice').addEventListener('input', function() {
+    const purchasePrice = parseFloat(this.value) || 0;
+    const markup = 0.2; // 20% markup
+    const retailPrice = purchasePrice * (1 + markup);
+    document.getElementById('retailPrice').value = retailPrice.toFixed(2);
+  });
+  
+  // Set stock to 0 for services
+  document.getElementById('type').addEventListener('input', function() {
+    if (this.value.toLowerCase() === 'service') {
+      document.getElementById('stock').value = 0;
+      document.getElementById('stock').readOnly = true;
+    } else {
+      document.getElementById('stock').readOnly = false;
+    }
+  });
+</script>
+
+<%- include('../partials/footer') %> 

@@ -1,0 +1,88 @@
+<%- include('../partials/header') %>
+
+<div class="container-fluid">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Purchases</h2>
+    <a href="/purchases/new" class="btn btn-primary">
+      <i class="bi bi-plus-lg"></i> New Purchase
+    </a>
+  </div>
+  
+  <% if (typeof error !== 'undefined' && error) { %>
+    <div class="alert alert-danger" role="alert">
+      <%= error %>
+    </div>
+  <% } %>
+  
+  <!-- Search Form -->
+  <div class="card mb-4">
+    <div class="card-body">
+      <form action="/purchases" method="GET" class="row g-3">
+        <div class="col-md-10">
+          <input type="text" name="search" class="form-control" placeholder="Search by supplier name or invoice number" value="<%= search || '' %>">
+        </div>
+        <div class="col-md-2">
+          <button type="submit" class="btn btn-primary w-100">Search</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  
+  <!-- Purchases List -->
+  <div class="card">
+    <div class="card-header">
+      <h5 class="mb-0"><%= search ? 'Search Results' : 'Recent Purchases' %></h5>
+    </div>
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table table-hover">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Supplier</th>
+              <th>Items</th>
+              <th>Total Amount</th>
+              <th>Paid</th>
+              <th>Balance</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if (recentPurchases && recentPurchases.length > 0) { %>
+              <% recentPurchases.forEach(purchase => { %>
+                <tr>
+                  <td><%= new Date(purchase.date).toLocaleDateString() %></td>
+                  <td><%= purchase.supplier ? purchase.supplier.name : 'N/A' %></td>
+                  <td><%= purchase.items.length %> items</td>
+                  <td>Rs. <%= purchase.totalAmount.toFixed(2) %></td>
+                  <td>Rs. <%= purchase.amountPaid.toFixed(2) %></td>
+                  <td class="<%= (purchase.totalAmount - purchase.amountPaid) > 0 ? 'text-danger' : '' %>">
+                    Rs. <%= (purchase.totalAmount - purchase.amountPaid).toFixed(2) %>
+                  </td>
+                  <td>
+                    <a href="/purchases/<%= purchase.id %>" class="btn btn-sm btn-info">View</a>
+                    <button type="button" class="btn btn-sm btn-danger" 
+                      onclick="showDeleteConfirmation(
+                        'Purchase #<%= purchase.id %>', 
+                        '/purchases/<%= purchase.id %>/delete',
+                        'This will permanently delete this purchase and update inventory quantities.'
+                      )">
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              <% }); %>
+            <% } else { %>
+              <tr>
+                <td colspan="6" class="text-center">No purchases found</td>
+              </tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/delete-modal') %>
+<%- include('../partials/footer') %> 

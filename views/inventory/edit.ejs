@@ -1,0 +1,118 @@
+<%- include('../partials/header') %>
+
+<div class="container-fluid">
+  <!-- Page Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-pencil me-2"></i>Edit Inventory Item</h2>
+    <div>
+      <a href="/inventory/<%= item.id %>" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-2"></i>Back to Item
+      </a>
+    </div>
+  </div>
+
+  <!-- Alerts -->
+  <% if (typeof errorMessage !== 'undefined' && errorMessage) { %>
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+      <%= errorMessage %>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  <% } %>
+
+  <!-- Edit Form -->
+  <div class="card">
+    <div class="card-body">
+      <form action="/inventory/<%= item.id %>/edit" method="POST">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <div class="mb-3">
+              <label for="name" class="form-label">Item Name</label>
+              <input type="text" class="form-control" id="name" name="name" value="<%= item.name %>" required>
+            </div>
+          </div>
+          
+          <div class="col-md-6">
+            <div class="mb-3">
+              <label for="urduName" class="form-label">Urdu Name (Optional)</label>
+              <input type="text" class="form-control" id="urduName" name="urduName" value="<%= item.urduName || '' %>">
+            </div>
+          </div>
+          
+          <div class="col-md-6">
+            <div class="mb-3">
+              <label for="type" class="form-label">Category</label>
+              <input type="text" class="form-control" id="type" name="type" value="<%= item.type %>" required list="categories">
+              <datalist id="categories">
+                <option value="Electronics">
+                <option value="Clothing">
+                <option value="Food">
+                <option value="Beverages">
+                <option value="Household">
+                <option value="Stationery">
+                <option value="Other">
+              </datalist>
+            </div>
+          </div>
+          
+          <div class="col-md-4">
+            <div class="mb-3">
+              <label for="purchasePrice" class="form-label">Purchase Price (Rs.)</label>
+              <input type="number" class="form-control" id="purchasePrice" name="purchasePrice" min="0" step="0.01" value="<%= item.purchasePrice %>" required>
+            </div>
+          </div>
+          
+          <div class="col-md-4">
+            <div class="mb-3">
+              <label for="retailPrice" class="form-label">Retail Price (Rs.)</label>
+              <input type="number" class="form-control" id="retailPrice" name="retailPrice" min="0" step="0.01" value="<%= item.retailPrice %>" required>
+            </div>
+          </div>
+          
+          <div class="col-md-4">
+            <div class="mb-3">
+              <label for="stock" class="form-label">Current Stock</label>
+              <input type="number" class="form-control" id="stock" name="stock" min="0" value="<%= item.stock %>" required readonly>
+              <small class="form-text text-muted">To adjust stock, use the Adjust Stock button on the item details page.</small>
+            </div>
+          </div>
+          
+          <div class="col-12">
+            <div class="mb-3">
+              <label for="description" class="form-label">Description (Optional)</label>
+              <textarea class="form-control" id="description" name="description" rows="3"><%= item.description || '' %></textarea>
+            </div>
+          </div>
+          
+          <div class="col-12 mt-4">
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-save me-2"></i>Save Changes
+            </button>
+            <a href="/inventory/<%= item.id %>" class="btn btn-outline-secondary ms-2">Cancel</a>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Calculate retail price based on purchase price with markup
+  document.getElementById('purchasePrice').addEventListener('input', function() {
+    const purchasePrice = parseFloat(this.value) || 0;
+    const currentRetailPrice = parseFloat(document.getElementById('retailPrice').value) || 0;
+    const currentMarkup = (currentRetailPrice / purchasePrice) - 1;
+    
+    // Only auto-update if the user hasn't manually changed the retail price
+    if (!document.getElementById('retailPrice').dataset.userModified) {
+      const newRetailPrice = purchasePrice * (1 + Math.max(0.2, currentMarkup));
+      document.getElementById('retailPrice').value = newRetailPrice.toFixed(2);
+    }
+  });
+  
+  // Track if user manually changes retail price
+  document.getElementById('retailPrice').addEventListener('input', function() {
+    this.dataset.userModified = 'true';
+  });
+</script>
+
+<%- include('../partials/footer') %> 

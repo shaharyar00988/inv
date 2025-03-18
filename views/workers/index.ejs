@@ -1,0 +1,74 @@
+<%- include('../partials/header') %>
+
+<div class="container-fluid">
+  <div class="row mb-4">
+    <div class="col">
+      <h2>Workers</h2>
+    </div>
+    <div class="col-auto">
+      <a href="/workers/create" class="btn btn-primary">Add Worker</a>
+    </div>
+  </div>
+
+  <!-- Search Form -->
+  <div class="card mb-4">
+    <div class="card-body">
+      <form action="/workers" method="GET" class="row g-3">
+        <div class="col-md-10">
+          <input type="text" name="search" class="form-control" placeholder="Search by name, address or phone number" value="<%= search || '' %>">
+        </div>
+        <div class="col-md-2">
+          <button type="submit" class="btn btn-primary w-100">Search</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Workers Table -->
+  <div class="card">
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table table-striped table-hover">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Address</th>
+              <th>Phone Number</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if (workers && workers.length > 0) { %>
+              <% workers.forEach(worker => { %>
+                <tr>
+                  <td><%= worker.name %></td>
+                  <td><%= worker.address %></td>
+                  <td><%= worker.number %></td>
+                  <td>
+                    <a href="/workers/<%= worker.id %>" class="btn btn-sm btn-info">View</a>
+                    <a href="/workers/<%= worker.id %>/edit" class="btn btn-sm btn-warning">Edit</a>
+                    <button type="button" class="btn btn-sm btn-danger" 
+                      onclick="showDeleteConfirmation(
+                        '<%= worker.name %>', 
+                        '/workers/<%= worker.id %>/delete',
+                        'This will permanently delete the worker and their sales history.'
+                      )">
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              <% }); %>
+            <% } else { %>
+              <tr>
+                <td colspan="4" class="text-center">No workers found</td>
+              </tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/delete-modal') %>
+<%- include('../partials/footer') %> 

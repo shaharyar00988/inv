@@ -1,0 +1,332 @@
+<%- include('../partials/header') %>
+
+<div class="container-fluid">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>New Supplier Return</h2>
+    <a href="/returns" class="btn btn-secondary">
+      <i class="bi bi-arrow-left"></i> Back to Returns
+    </a>
+  </div>
+
+  <div class="card">
+    <div class="card-body">
+      <form id="supplierReturnForm" action="/returns/supplier/new" method="POST">
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <label for="supplier" class="form-label">Supplier</label>
+            <select class="form-select" id="supplier" name="supplierId" required>
+              <option value="">Select Supplier</option>
+              <% suppliers.forEach(supplier => { %>
+                <option value="<%= supplier.id %>"><%= supplier.name %></option>
+              <% }) %>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label for="date" class="form-label">Return Date</label>
+            <input type="date" class="form-control" id="date" name="date" value="<%= new Date().toISOString().split('T')[0] %>" required>
+          </div>
+        </div>
+
+        <div class="row mb-3">
+          <div class="col-md-12">
+            <label for="reason" class="form-label">Reason for Return</label>
+            <textarea class="form-control" id="reason" name="reason" rows="2" required></textarea>
+          </div>
+        </div>
+
+        <div class="card mb-4">
+          <div class="card-header bg-light">
+            <h5 class="mb-0">Return Items</h5>
+          </div>
+          <div class="card-body">
+            <div class="mb-3">
+              <div class="input-group">
+                <input type="text" class="form-control" id="itemSearch" placeholder="Search for items...">
+                <button type="button" class="btn btn-outline-secondary" id="searchButton">
+                  <i class="bi bi-search"></i> Search
+                </button>
+              </div>
+            </div>
+
+            <div id="searchResults" class="mb-3" style="display: none;">
+              <div class="card">
+                <div class="card-header bg-light">Search Results</div>
+                <div class="card-body">
+                  <div class="table-responsive">
+                    <table class="table table-sm table-hover" id="resultsTable">
+                      <thead>
+                        <tr>
+                          <th>Name</th>
+                          <th>Urdu Name</th>
+                          <th>Type</th>
+                          <th>Purchase Price</th>
+                          <th>Action</th>
+                        </tr>
+                      </thead>
+                      <tbody id="resultsBody"></tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="table-responsive">
+              <table class="table table-bordered" id="returnItemsTable">
+                <thead>
+                  <tr>
+                    <th>Item</th>
+                    <th>Quantity</th>
+                    <th>Price</th>
+                    <th>Total</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="returnItems"></tbody>
+                <tfoot>
+                  <tr>
+                    <td colspan="3" class="text-end"><strong>Total Amount:</strong></td>
+                    <td><span id="totalAmount">0.00</span></td>
+                    <td></td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+
+            <div class="alert alert-info" id="noItemsMessage">
+              No items added to return. Search and add items above.
+            </div>
+          </div>
+        </div>
+
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <label for="refundAmount" class="form-label">Refund Amount</label>
+            <div class="input-group">
+              <span class="input-group-text">Rs.</span>
+              <input type="number" class="form-control" id="refundAmount" name="refundAmount" step="0.01" min="0" required>
+            </div>
+            <div class="form-text">Amount to be refunded by the supplier</div>
+          </div>
+        </div>
+
+        <input type="hidden" id="returnItemsJson" name="returnItems" value="[]">
+        <input type="hidden" id="totalAmountInput" name="totalAmount" value="0">
+
+        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+          <button type="submit" class="btn btn-primary" id="submitButton" disabled>
+            <i class="bi bi-save"></i> Create Return
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const itemSearch = document.getElementById('itemSearch');
+    const searchButton = document.getElementById('searchButton');
+    const searchResults = document.getElementById('searchResults');
+    const resultsBody = document.getElementById('resultsBody');
+    const returnItems = document.getElementById('returnItems');
+    const returnItemsJson = document.getElementById('returnItemsJson');
+    const totalAmountSpan = document.getElementById('totalAmount');
+    const totalAmountInput = document.getElementById('totalAmountInput');
+    const noItemsMessage = document.getElementById('noItemsMessage');
+    const submitButton = document.getElementById('submitButton');
+    const refundAmount = document.getElementById('refundAmount');
+    
+    let items = [];
+    
+    // Search for items
+    searchButton.addEventListener('click', searchItems);
+    itemSearch.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        searchItems();
+      }
+    });
+    
+    async function searchItems() {
+      const query = itemSearch.value.trim();
+      if (query.length < 2) {
+        alert('Please enter at least 2 characters to search');
+        return;
+      }
+      
+      try {
+        const response = await fetch(`/api/inventory/search?query=${encodeURIComponent(query)}`);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        // Ensure data is an array
+        const results = Array.isArray(data) ? data : [];
+        
+        if (results.length === 0) {
+          resultsBody.innerHTML = '<tr><td colspan="5" class="text-center">No items found</td></tr>';
+        } else {
+          resultsBody.innerHTML = '';
+          results.forEach(item => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+              <td>${item.name}</td>
+              <td>${item.urduName || '-'}</td>
+              <td>${item.type}</td>
+              <td>Rs. ${item.purchasePrice.toFixed(2)}</td>
+              <td>
+                <button type="button" class="btn btn-sm btn-primary add-item" data-id="${item.id}" 
+                  data-name="${item.name}" data-price="${item.purchasePrice}">
+                  <i class="bi bi-plus"></i> Add
+                </button>
+              </td>
+            `;
+            resultsBody.appendChild(row);
+          });
+          
+          // Add event listeners to add buttons
+          document.querySelectorAll('.add-item').forEach(button => {
+            button.addEventListener('click', function() {
+              const itemId = this.getAttribute('data-id');
+              const itemName = this.getAttribute('data-name');
+              const itemPrice = parseFloat(this.getAttribute('data-price'));
+              
+              addItemToReturn(itemId, itemName, itemPrice);
+              searchResults.style.display = 'none';
+              itemSearch.value = '';
+            });
+          });
+        }
+        
+        searchResults.style.display = 'block';
+      } catch (error) {
+        console.error('Error searching items:', error);
+        alert('Error searching items. Please try again.');
+      }
+    }
+    
+    function addItemToReturn(itemId, itemName, itemPrice) {
+      // Check if item already exists in the return
+      const existingItem = items.find(item => item.id === itemId);
+      
+      if (existingItem) {
+        existingItem.quantity += 1;
+        existingItem.total = existingItem.quantity * existingItem.price;
+      } else {
+        items.push({
+          id: itemId,
+          name: itemName,
+          quantity: 1,
+          price: itemPrice,
+          total: itemPrice
+        });
+      }
+      
+      updateReturnItemsTable();
+    }
+    
+    function updateReturnItemsTable() {
+      if (items.length === 0) {
+        noItemsMessage.style.display = 'block';
+        submitButton.disabled = true;
+      } else {
+        noItemsMessage.style.display = 'none';
+        submitButton.disabled = false;
+      }
+      
+      returnItems.innerHTML = '';
+      let total = 0;
+      
+      items.forEach((item, index) => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${item.name}</td>
+          <td>
+            <input type="number" class="form-control form-control-sm quantity-input" 
+              data-index="${index}" value="${item.quantity}" min="1" required>
+          </td>
+          <td>
+            <div class="input-group input-group-sm">
+              <span class="input-group-text">Rs.</span>
+              <input type="number" class="form-control form-control-sm price-input" 
+                data-index="${index}" value="${item.price.toFixed(2)}" step="0.01" min="0" required>
+            </div>
+          </td>
+          <td>Rs. ${item.total.toFixed(2)}</td>
+          <td>
+            <button type="button" class="btn btn-sm btn-danger remove-item" data-index="${index}">
+              <i class="bi bi-trash"></i>
+            </button>
+          </td>
+        `;
+        returnItems.appendChild(row);
+        total += item.total;
+      });
+      
+      // Update total amount
+      totalAmountSpan.textContent = total.toFixed(2);
+      totalAmountInput.value = total.toFixed(2);
+      
+      // Set refund amount equal to total by default
+      refundAmount.value = total.toFixed(2);
+      
+      // Update hidden input with JSON data
+      returnItemsJson.value = JSON.stringify(items);
+      
+      // Add event listeners to quantity and price inputs
+      document.querySelectorAll('.quantity-input').forEach(input => {
+        input.addEventListener('change', function() {
+          const index = parseInt(this.getAttribute('data-index'));
+          const quantity = parseInt(this.value) || 1;
+          
+          if (quantity < 1) {
+            this.value = 1;
+            items[index].quantity = 1;
+          } else {
+            items[index].quantity = quantity;
+          }
+          
+          items[index].total = items[index].quantity * items[index].price;
+          updateReturnItemsTable();
+        });
+      });
+      
+      document.querySelectorAll('.price-input').forEach(input => {
+        input.addEventListener('change', function() {
+          const index = parseInt(this.getAttribute('data-index'));
+          const price = parseFloat(this.value) || 0;
+          
+          if (price < 0) {
+            this.value = 0;
+            items[index].price = 0;
+          } else {
+            items[index].price = price;
+          }
+          
+          items[index].total = items[index].quantity * items[index].price;
+          updateReturnItemsTable();
+        });
+      });
+      
+      // Add event listeners to remove buttons
+      document.querySelectorAll('.remove-item').forEach(button => {
+        button.addEventListener('click', function() {
+          const index = parseInt(this.getAttribute('data-index'));
+          items.splice(index, 1);
+          updateReturnItemsTable();
+        });
+      });
+    }
+    
+    // Form submission validation
+    document.getElementById('supplierReturnForm').addEventListener('submit', function(e) {
+      if (items.length === 0) {
+        e.preventDefault();
+        alert('Please add at least one item to the return');
+      }
+    });
+  });
+</script>
+
+<%- include('../partials/footer') %> 

@@ -1,0 +1,117 @@
+/* Print Styles for Reports */
+@media print {
+  /* Hide non-printable elements */
+  .no-print,
+  .navbar,
+  .sidebar,
+  .btn,
+  .filter-section {
+    display: none !important;
+  }
+
+  /* Reset body styles */
+  body {
+    padding: 0 !important;
+    margin: 0 !important;
+    background: white !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Container styles */
+  .container-fluid {
+    width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  /* Table styles */
+  .table {
+    width: 100% !important;
+    margin-bottom: 1rem !important;
+    border-collapse: collapse !important;
+    page-break-inside: auto !important;
+  }
+
+  .table th,
+  .table td {
+    background-color: white !important;
+    border: 1px solid #dee2e6 !important;
+    padding: 0.5rem !important;
+  }
+
+  .table thead th {
+    background-color: #f8f9fa !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Card styles */
+  .card {
+    border: none !important;
+    box-shadow: none !important;
+  }
+
+  .card-body {
+    padding: 0.5rem !important;
+  }
+
+  /* Report header */
+  .report-header {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+
+  .report-title {
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 5px;
+  }
+
+  .report-date {
+    font-size: 14px;
+    color: #666;
+  }
+
+  /* Summary section */
+  .summary-section {
+    margin-bottom: 20px;
+  }
+
+  /* Charts */
+  .chart-container {
+    page-break-inside: avoid;
+    margin-bottom: 20px;
+  }
+
+  /* Developer credit */
+  .developer-credit {
+    font-size: 0.7rem;
+    color: #adb5bd !important;
+    text-align: right;
+    padding-right: 10px;
+    margin-top: 20px;
+    font-weight: bold;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Page break utilities */
+  .page-break-after {
+    page-break-after: always;
+  }
+
+  .page-break-before {
+    page-break-before: always;
+  }
+
+  .avoid-break {
+    page-break-inside: avoid;
+  }
+
+  /* Print settings */
+  @page {
+    size: auto;
+    margin: 10mm;
+  }
+} 

@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Customer Ledger - <%= customer.name %></title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      color: #333;
+      background-color: #f8f9fa;
+      padding: 20px;
+    }
+    
+    .ledger-container {
+      max-width: 1000px;
+      margin: 0 auto;
+      background-color: white;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    
+    .ledger-header {
+      background-color: #f8f9fa;
+      padding: 20px;
+      border-bottom: 1px solid #eee;
+    }
+    
+    .ledger-body {
+      padding: 20px;
+    }
+    
+    .ledger-footer {
+      background-color: #f8f9fa;
+      padding: 20px;
+      border-top: 1px solid #eee;
+      font-size: 0.9rem;
+    }
+    
+    .customer-details {
+      margin-top: 20px;
+      padding: 15px;
+      background-color: #f8f9fa;
+      border-radius: 5px;
+    }
+    
+    .table th {
+      background-color: #f8f9fa;
+      font-weight: 600;
+    }
+    
+    .table-striped tbody tr:nth-of-type(odd) {
+      background-color: rgba(0, 0, 0, 0.02);
+    }
+    
+    .balance-positive {
+      color: #198754;
+    }
+    
+    .balance-negative {
+      color: #dc3545;
+    }
+    
+    .print-buttons {
+      text-align: center;
+      margin: 20px 0;
+    }
+    
+    @media print {
+      body {
+        background-color: white;
+        padding: 0;
+      }
+      
+      .ledger-container {
+        box-shadow: none;
+        max-width: 100%;
+      }
+      
+      .print-buttons {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="print-buttons">
+    <button class="btn btn-primary" onclick="window.print()">Print Ledger</button>
+    <a href="/customers/<%= customer.id %>" class="btn btn-secondary">Back</a>
+  </div>
+  
+  <div class="ledger-container">
+    <div class="ledger-header">
+      <div class="row align-items-center">
+        <div class="col-md-6">
+          <h2 class="mb-0">Customer Ledger</h2>
+          <p class="text-muted mb-0">Generated on <%= new Date().toLocaleDateString() %></p>
+        </div>
+        <div class="col-md-6 text-md-end">
+          <h4><%= settings ? settings.shopName : 'Your Shop Name' %></h4>
+          <p class="mb-0"><%= settings ? settings.address : 'Shop Address' %></p>
+          <p class="mb-0">Phone: <%= settings ? settings.phone : 'Phone Number' %></p>
+        </div>
+      </div>
+    </div>
+    
+    <div class="ledger-body">
+      <div class="customer-details mb-4">
+        <h5>Customer Information</h5>
+        <div class="row">
+          <div class="col-md-6">
+            <p class="mb-1"><strong>Name:</strong> <%= customer.name %></p>
+            <% if (customer.address) { %>
+              <p class="mb-1"><strong>Address:</strong> <%= customer.address %></p>
+            <% } %>
+            <% if (customer.number) { %>
+              <p class="mb-1"><strong>Phone:</strong> <%= customer.number %></p>
+            <% } %>
+          </div>
+          <div class="col-md-6 text-md-end">
+            <p class="mb-1"><strong>Current Balance:</strong> 
+              <span class="<%= customer.balance > 0 ? 'balance-negative' : 'balance-positive' %>">
+                Rs. <%= Math.abs(customer.balance).toFixed(2) %> 
+                <%= customer.balance > 0 ? '(Due)' : customer.balance < 0 ? '(Advance)' : '' %>
+              </span>
+            </p>
+          </div>
+        </div>
+      </div>
+      
+      <div class="table-responsive">
+        <table class="table table-striped">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Description</th>
+              <th class="text-end">Debit</th>
+              <th class="text-end">Credit</th>
+              <th class="text-end">Balance</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% let runningBalance = 0; %>
+            <% transactions.forEach(transaction => { %>
+              <tr>
+                <td><%= new Date(transaction.date).toLocaleDateString() %></td>
+                <td>
+                  <% if (transaction.type === 'sale') { %>
+                    Sale Invoice #<%= transaction.id %>
+                    <% if (transaction.worker) { %>
+                      - Worker: <%= transaction.worker.name %>
+                    <% } %>
+                  <% } else if (transaction.type === 'return') { %>
+                    Return Invoice #<%= transaction.id %>
+                  <% } else if (transaction.type === 'payment') { %>
+                    Payment - <%= transaction.paymentMethod %> 
+                    <% if (transaction.reference) { %>
+                      (Ref: <%= transaction.reference %>)
+                    <% } %>
+                  <% } %>
+                </td>
+                <td class="text-end">
+                  <% if (transaction.type === 'sale') { %>
+                    Rs. <%= transaction.amount.toFixed(2) %>
+                    <% runningBalance += transaction.amount; %>
+                  <% } else { %>
+                    -
+                  <% } %>
+                </td>
+                <td class="text-end">
+                  <% if (transaction.type === 'payment' || transaction.type === 'return') { %>
+                    Rs. <%= transaction.amount.toFixed(2) %>
+                    <% runningBalance -= transaction.amount; %>
+                  <% } else { %>
+                    -
+                  <% } %>
+                </td>
+                <td class="text-end <%= runningBalance > 0 ? 'balance-negative' : runningBalance < 0 ? 'balance-positive' : '' %>">
+                  Rs. <%= Math.abs(runningBalance).toFixed(2) %>
+                  <%= runningBalance > 0 ? '(Due)' : runningBalance < 0 ? '(Advance)' : '' %>
+                </td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    
+    <div class="ledger-footer text-center">
+      <p class="mb-0">This is a computer generated ledger statement.</p>
+    </div>
+  </div>
+</body>
+</html> 

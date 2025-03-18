@@ -1,0 +1,142 @@
+<%- include('../partials/header') %>
+
+<div class="container-fluid">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Customer Return Details</h2>
+    <div>
+      <div class="btn-group me-2">
+        <a href="/invoices/returns/customer/<%= returnData.id %>/normal" target="_blank" class="btn btn-danger">
+          <i class="bi bi-printer"></i> Print Invoice
+        </a>
+        <a href="/invoices/returns/customer/<%= returnData.id %>/thermal" target="_blank" class="btn btn-outline-danger">
+          <i class="bi bi-receipt"></i> Thermal Receipt
+        </a>
+      </div>
+      <a href="/returns" class="btn btn-secondary">
+        <i class="bi bi-arrow-left"></i> Back to Returns
+      </a>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-md-4">
+      <div class="card mb-4">
+        <div class="card-header bg-light">
+          <h5 class="mb-0">Return Information</h5>
+        </div>
+        <div class="card-body">
+          <div class="mb-3">
+            <label class="form-label fw-bold">Return ID</label>
+            <p><%= returnData.id %></p>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold">Date</label>
+            <p><%= new Date(returnData.date).toLocaleDateString() %></p>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold">Customer</label>
+            <p><%= returnData.customer.name %></p>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold">Total Amount</label>
+            <p>$<%= returnData.totalAmount.toFixed(2) %></p>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold">Refund Amount</label>
+            <p>$<%= returnData.refundAmount.toFixed(2) %></p>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold">Reason</label>
+            <p><%= returnData.reason %></p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-8">
+      <div class="card">
+        <div class="card-header bg-light">
+          <h5 class="mb-0">Return Items</h5>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-bordered">
+              <thead>
+                <tr>
+                  <th>Item</th>
+                  <th>Quantity</th>
+                  <th>Price</th>
+                  <th>Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% returnData.items.forEach(item => { %>
+                  <tr>
+                    <td><%= item.inventory.name %></td>
+                    <td><%= item.quantity %></td>
+                    <td>$<%= item.price.toFixed(2) %></td>
+                    <td>$<%= (item.quantity * item.price).toFixed(2) %></td>
+                  </tr>
+                <% }) %>
+              </tbody>
+              <tfoot>
+                <tr>
+                  <td colspan="3" class="text-end"><strong>Total:</strong></td>
+                  <td>$<%= returnData.totalAmount.toFixed(2) %></td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row mt-4">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header bg-light">
+          <h5 class="mb-0">Customer Information</h5>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-4">
+              <div class="mb-3">
+                <label class="form-label fw-bold">Name</label>
+                <p><%= returnData.customer.name %></p>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="mb-3">
+                <label class="form-label fw-bold">Phone</label>
+                <p><%= returnData.customer.phone || 'N/A' %></p>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="mb-3">
+                <label class="form-label fw-bold">Email</label>
+                <p><%= returnData.customer.email || 'N/A' %></p>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label class="form-label fw-bold">Address</label>
+                <p><%= returnData.customer.address || 'N/A' %></p>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label class="form-label fw-bold">Current Balance</label>
+                <p>$<%= returnData.customer.balance.toFixed(2) %></p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/footer') %> 

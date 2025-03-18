@@ -1,0 +1,223 @@
+<%- include('../partials/header') %>
+
+<div class="container-fluid">
+  <!-- Page Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-boxes me-2"></i>Inventory Management</h2>
+    <a href="/inventory/create" class="btn btn-primary">
+      <i class="bi bi-plus-circle me-2"></i>Add New Item
+    </a>
+  </div>
+
+  <!-- Alerts -->
+  <% if (typeof successMessage !== 'undefined' && successMessage) { %>
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+      <%= successMessage %>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  <% } %>
+  
+  <% if (typeof errorMessage !== 'undefined' && errorMessage) { %>
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+      <%= errorMessage %>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  <% } %>
+
+  <!-- Summary Cards -->
+  <div class="row mb-4">
+    <div class="col-md-3">
+      <div class="card stat-card">
+        <div class="card-body d-flex justify-content-between align-items-center">
+          <div>
+            <h6 class="card-subtitle text-muted">Total Items</h6>
+            <h3 class="card-title mb-0"><%= inventory.length %></h3>
+          </div>
+          <div class="stat-icon text-primary">
+            <i class="bi bi-boxes"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md-3">
+      <div class="card stat-card purple">
+        <div class="card-body d-flex justify-content-between align-items-center">
+          <div>
+            <h6 class="card-subtitle text-muted">Low Stock Items</h6>
+            <h3 class="card-title mb-0"><%= inventory.filter(item => item.stock < 10).length %></h3>
+          </div>
+          <div class="stat-icon text-purple">
+            <i class="bi bi-exclamation-triangle"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md-3">
+      <div class="card stat-card green">
+        <div class="card-body d-flex justify-content-between align-items-center">
+          <div>
+            <h6 class="card-subtitle text-muted">Total Stock Value</h6>
+            <h3 class="card-title mb-0">Rs. <%= inventory.reduce((sum, item) => sum + (item.purchasePrice * item.stock), 0).toLocaleString() %></h3>
+          </div>
+          <div class="stat-icon text-success">
+            <i class="bi bi-cash"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md-3">
+      <div class="card stat-card orange">
+        <div class="card-body d-flex justify-content-between align-items-center">
+          <div>
+            <h6 class="card-subtitle text-muted">Potential Revenue</h6>
+            <h3 class="card-title mb-0">Rs. <%= inventory.reduce((sum, item) => sum + (item.retailPrice * item.stock), 0).toLocaleString() %></h3>
+          </div>
+          <div class="stat-icon text-warning">
+            <i class="bi bi-graph-up"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Search and Filter -->
+  <div class="card mb-4">
+    <div class="card-body">
+      <form action="/inventory" method="GET" class="row g-3">
+        <div class="col-md-4">
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-search"></i></span>
+            <input type="text" class="form-control" name="search" placeholder="Search items..." value="<%= search %>">
+          </div>
+        </div>
+        
+        <div class="col-md-3">
+          <select class="form-select" name="category">
+            <option value="">All Categories</option>
+            <% 
+              // Extract unique categories from inventory items
+              const categories = [...new Set(inventory.map(item => item.type))];
+              categories.forEach(cat => { 
+            %>
+              <option value="<%= cat %>" <%= category === cat ? 'selected' : '' %>><%= cat %></option>
+            <% }); %>
+          </select>
+        </div>
+        
+        <div class="col-md-2">
+          <button type="submit" class="btn btn-primary w-100">Filter</button>
+        </div>
+        
+        <div class="col-md-2">
+          <a href="/inventory" class="btn btn-outline-secondary w-100">Reset</a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Inventory Table -->
+  <div class="card">
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table table-hover">
+          <thead class="table-light">
+            <tr>
+              <th>ID</th>
+              <th>Name</th>
+              <th>Urdu Name</th>
+              <th>Category</th>
+              <th>Purchase Price</th>
+              <th>Retail Price</th>
+              <th>Stock</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if (inventory.length > 0) { %>
+              <% inventory.forEach(item => { %>
+                <tr>
+                  <td><%= item.id %></td>
+                  <td><%= item.name %></td>
+                  <td><%= item.urduName || '-' %></td>
+                  <td><%= item.type %></td>
+                  <td>Rs. <%= item.purchasePrice.toLocaleString() %></td>
+                  <td>Rs. <%= item.retailPrice.toLocaleString() %></td>
+                  <td>
+                    <span class="<%= item.stock < 10 ? 'text-danger fw-bold' : '' %>">
+                      <%= item.stock %>
+                    </span>
+                  </td>
+                  <td>
+                    <div class="btn-group btn-group-sm">
+                      <a href="/inventory/<%= item.id %>" class="btn btn-outline-primary">
+                        <i class="bi bi-eye"></i>
+                      </a>
+                      <a href="/inventory/<%= item.id %>/edit" class="btn btn-outline-secondary">
+                        <i class="bi bi-pencil"></i>
+                      </a>
+                      <button type="button" class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#adjustStockModal<%= item.id %>">
+                        <i class="bi bi-plus-slash-minus"></i>
+                      </button>
+                    </div>
+                    
+                    <!-- Stock Adjustment Modal -->
+                    <div class="modal fade" id="adjustStockModal<%= item.id %>" tabindex="-1" aria-hidden="true">
+                      <div class="modal-dialog">
+                        <div class="modal-content">
+                          <div class="modal-header">
+                            <h5 class="modal-title">Adjust Stock: <%= item.name %></h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                          </div>
+                          <form action="/inventory/<%= item.id %>/adjust-stock" method="POST">
+                            <div class="modal-body">
+                              <div class="mb-3">
+                                <label class="form-label">Current Stock: <%= item.stock %></label>
+                              </div>
+                              <div class="mb-3">
+                                <label for="adjustment" class="form-label">Adjustment Amount</label>
+                                <input type="number" class="form-control" id="adjustment" name="adjustment" required>
+                                <small class="form-text text-muted">Use positive values to add stock, negative to remove.</small>
+                              </div>
+                              <div class="mb-3">
+                                <label for="reason" class="form-label">Reason for Adjustment</label>
+                                <select class="form-select" id="reason" name="reason" required>
+                                  <option value="Inventory Count">Inventory Count</option>
+                                  <option value="Damaged">Damaged</option>
+                                  <option value="Lost">Lost</option>
+                                  <option value="Returned to Supplier">Returned to Supplier</option>
+                                  <option value="Other">Other</option>
+                                </select>
+                              </div>
+                            </div>
+                            <div class="modal-footer">
+                              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                              <button type="submit" class="btn btn-primary">Save Changes</button>
+                            </div>
+                          </form>
+                        </div>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              <% }); %>
+            <% } else { %>
+              <tr>
+                <td colspan="7" class="text-center py-4">
+                  <i class="bi bi-inbox display-4 d-block mb-2 text-muted"></i>
+                  <p class="lead">No inventory items found</p>
+                  <a href="/inventory/create" class="btn btn-primary mt-2">Add Your First Item</a>
+                </td>
+              </tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/delete-modal') %>
+<%- include('../partials/footer') %> 

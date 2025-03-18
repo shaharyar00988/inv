@@ -1,0 +1,101 @@
+<%- include('../partials/header') %>
+
+<div class="container-fluid">
+  <!-- Page Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-pencil me-2"></i>Edit Expense</h2>
+    <div>
+      <a href="/expenses/<%= expense.id %>" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-2"></i>Back to Expense
+      </a>
+    </div>
+  </div>
+
+  <!-- Alerts -->
+  <% if (typeof errorMessage !== 'undefined' && errorMessage) { %>
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+      <%= errorMessage %>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  <% } %>
+
+  <!-- Edit Form -->
+  <div class="card">
+    <div class="card-body">
+      <form action="/expenses/<%= expense.id %>/edit" method="POST">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <div class="mb-3">
+              <label for="description" class="form-label">Description</label>
+              <input type="text" class="form-control" id="description" name="description" value="<%= expense.description %>" required>
+            </div>
+          </div>
+          
+          <div class="col-md-6">
+            <div class="mb-3">
+              <label for="category" class="form-label">Category</label>
+              <input type="text" class="form-control" id="category" name="category" value="<%= expense.category %>" required list="categories">
+              <datalist id="categories">
+                <option value="Rent">
+                <option value="Utilities">
+                <option value="Salaries">
+                <option value="Maintenance">
+                <option value="Office Supplies">
+                <option value="Transportation">
+                <option value="Marketing">
+                <option value="Insurance">
+                <option value="Taxes">
+                <option value="Miscellaneous">
+              </datalist>
+            </div>
+          </div>
+          
+          <div class="col-md-4">
+            <div class="mb-3">
+              <label for="amount" class="form-label">Amount (Rs.)</label>
+              <input type="number" class="form-control" id="amount" name="amount" min="0" step="0.01" value="<%= expense.amount %>" required>
+            </div>
+          </div>
+          
+          <div class="col-md-4">
+            <div class="mb-3">
+              <label for="date" class="form-label">Date</label>
+              <input type="date" class="form-control" id="date" name="date" value="<%= new Date(expense.date).toISOString().split('T')[0] %>" required>
+            </div>
+          </div>
+          
+          <div class="col-md-4">
+            <div class="mb-3">
+              <label for="paymentMethod" class="form-label">Payment Method</label>
+              <select class="form-select" id="paymentMethod" name="paymentMethod" required>
+                <option value="Cash" <%= expense.paymentMethod === 'Cash' ? 'selected' : '' %>>Cash</option>
+                <option value="Bank Transfer" <%= expense.paymentMethod === 'Bank Transfer' ? 'selected' : '' %>>Bank Transfer</option>
+                <option value="Credit Card" <%= expense.paymentMethod === 'Credit Card' ? 'selected' : '' %>>Credit Card</option>
+                <option value="Debit Card" <%= expense.paymentMethod === 'Debit Card' ? 'selected' : '' %>>Debit Card</option>
+                <option value="Mobile Payment" <%= expense.paymentMethod === 'Mobile Payment' ? 'selected' : '' %>>Mobile Payment</option>
+                <option value="Check" <%= expense.paymentMethod === 'Check' ? 'selected' : '' %>>Check</option>
+                <option value="Other" <%= expense.paymentMethod === 'Other' ? 'selected' : '' %>>Other</option>
+              </select>
+            </div>
+          </div>
+          
+          <div class="col-md-12">
+            <div class="mb-3">
+              <label for="reference" class="form-label">Reference (Optional)</label>
+              <input type="text" class="form-control" id="reference" name="reference" value="<%= expense.reference || '' %>" placeholder="Receipt number, invoice number, etc.">
+            </div>
+          </div>
+          
+          <div class="col-12 mt-4">
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-save me-2"></i>Save Changes
+            </button>
+            <a href="/expenses/<%= expense.id %>" class="btn btn-outline-secondary ms-2">Cancel</a>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/footer') %> 

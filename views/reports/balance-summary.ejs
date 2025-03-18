@@ -1,0 +1,230 @@
+<%- include('../partials/header') %>
+
+<!-- Add print stylesheet -->
+<link rel="stylesheet" href="/css/print.css">
+
+<div class="container-fluid">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Balance Summary Report</h2>
+    <div class="no-print">
+      <button class="btn btn-primary me-2" onclick="window.print()">
+        <i class="bi bi-printer"></i> Print Report
+      </button>
+      <a href="/reports" class="btn btn-secondary">
+        <i class="bi bi-arrow-left"></i> Back to Reports
+      </a>
+    </div>
+  </div>
+
+  <!-- Report Header for Print -->
+  <div class="report-header d-none d-print-block">
+    <div class="report-title">Balance Summary Report</div>
+    <div class="report-date">
+      Generated on: <%= new Date().toLocaleDateString() %>
+    </div>
+  </div>
+
+  <!-- Summary Cards -->
+  <div class="row mb-4 avoid-break">
+    <% 
+      const totalCustomerSales = customerSummary.reduce((sum, customer) => sum + customer.totalSales, 0);
+      const totalCustomerPayments = customerSummary.reduce((sum, customer) => sum + customer.totalPayments, 0);
+      const totalCustomerBalances = customerSummary.reduce((sum, customer) => sum + customer.balance, 0);
+      
+      const totalSupplierPurchases = supplierSummary.reduce((sum, supplier) => sum + supplier.totalPurchases, 0);
+      const totalSupplierPayments = supplierSummary.reduce((sum, supplier) => sum + supplier.totalPayments, 0);
+      const totalSupplierBalances = supplierSummary.reduce((sum, supplier) => sum + supplier.balance, 0);
+    %>
+    
+    <!-- Customer Summary -->
+    <div class="col-md-6">
+      <div class="card bg-light mb-4">
+        <div class="card-header">
+          <h5 class="mb-0">Customer Summary</h5>
+        </div>
+        <div class="card-body">
+          <div class="row g-3">
+            <div class="col-md-4">
+              <div class="border rounded p-3 text-center">
+                <h6 class="text-muted mb-1">Total Sales</h6>
+                <h4 class="mb-0 text-primary"><%= totalCustomerSales.toLocaleString('en-US', { style: 'currency', currency: 'PKR' }) %></h4>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="border rounded p-3 text-center">
+                <h6 class="text-muted mb-1">Total Payments</h6>
+                <h4 class="mb-0 text-success"><%= totalCustomerPayments.toLocaleString('en-US', { style: 'currency', currency: 'PKR' }) %></h4>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="border rounded p-3 text-center">
+                <h6 class="text-muted mb-1">Total Balance</h6>
+                <h4 class="mb-0 text-danger"><%= totalCustomerBalances.toLocaleString('en-US', { style: 'currency', currency: 'PKR' }) %></h4>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Supplier Summary -->
+    <div class="col-md-6">
+      <div class="card bg-light mb-4">
+        <div class="card-header">
+          <h5 class="mb-0">Supplier Summary</h5>
+        </div>
+        <div class="card-body">
+          <div class="row g-3">
+            <div class="col-md-4">
+              <div class="border rounded p-3 text-center">
+                <h6 class="text-muted mb-1">Total Purchases</h6>
+                <h4 class="mb-0 text-primary"><%= totalSupplierPurchases.toLocaleString('en-US', { style: 'currency', currency: 'PKR' }) %></h4>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="border rounded p-3 text-center">
+                <h6 class="text-muted mb-1">Total Payments</h6>
+                <h4 class="mb-0 text-success"><%= totalSupplierPayments.toLocaleString('en-US', { style: 'currency', currency: 'PKR' }) %></h4>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="border rounded p-3 text-center">
+                <h6 class="text-muted mb-1">Total Balance</h6>
+                <h4 class="mb-0 text-danger"><%= totalSupplierBalances.toLocaleString('en-US', { style: 'currency', currency: 'PKR' }) %></h4>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <!-- Customer Balances -->
+    <div class="col-md-6">
+      <div class="card avoid-break">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">Customer Balances</h5>
+          <button class="btn btn-sm btn-outline-primary no-print" onclick="exportTableToCSV('customer-balances.csv', 'customerTable')">
+            <i class="bi bi-download"></i> Export to CSV
+          </button>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-striped" id="customerTable">
+              <thead>
+                <tr>
+                  <th>Customer</th>
+                  <th class="text-end">Total Sales</th>
+                  <th class="text-end">Total Payments</th>
+                  <th class="text-end">Balance</th>
+                  <th class="text-end">Payment %</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% if (customerSummary && customerSummary.length > 0) { %>
+                  <% customerSummary.forEach(customer => { %>
+                    <tr>
+                      <td><%= customer.name %></td>
+                      <td class="text-end"><%= customer.totalSales.toLocaleString('en-US', { style: 'currency', currency: 'PKR' }) %></td>
+                      <td class="text-end"><%= customer.totalPayments.toLocaleString('en-US', { style: 'currency', currency: 'PKR' }) %></td>
+                      <td class="text-end"><%= customer.balance.toLocaleString('en-US', { style: 'currency', currency: 'PKR' }) %></td>
+                      <td class="text-end"><%= customer.paymentPercentage %>%</td>
+                    </tr>
+                  <% }); %>
+                <% } else { %>
+                  <tr>
+                    <td colspan="5" class="text-center">No customer data found</td>
+                  </tr>
+                <% } %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Supplier Balances -->
+    <div class="col-md-6">
+      <div class="card avoid-break">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">Supplier Balances</h5>
+          <button class="btn btn-sm btn-outline-primary no-print" onclick="exportTableToCSV('supplier-balances.csv', 'supplierTable')">
+            <i class="bi bi-download"></i> Export to CSV
+          </button>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-striped" id="supplierTable">
+              <thead>
+                <tr>
+                  <th>Supplier</th>
+                  <th class="text-end">Total Purchases</th>
+                  <th class="text-end">Total Payments</th>
+                  <th class="text-end">Balance</th>
+                  <th class="text-end">Payment %</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% if (supplierSummary && supplierSummary.length > 0) { %>
+                  <% supplierSummary.forEach(supplier => { %>
+                    <tr>
+                      <td><%= supplier.name %></td>
+                      <td class="text-end"><%= supplier.totalPurchases.toLocaleString('en-US', { style: 'currency', currency: 'PKR' }) %></td>
+                      <td class="text-end"><%= supplier.totalPayments.toLocaleString('en-US', { style: 'currency', currency: 'PKR' }) %></td>
+                      <td class="text-end"><%= supplier.balance.toLocaleString('en-US', { style: 'currency', currency: 'PKR' }) %></td>
+                      <td class="text-end"><%= supplier.paymentPercentage %>%</td>
+                    </tr>
+                  <% }); %>
+                <% } else { %>
+                  <tr>
+                    <td colspan="5" class="text-center">No supplier data found</td>
+                  </tr>
+                <% } %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Developer Credit -->
+  <div class="developer-credit d-none d-print-block">
+    Developed by Shaharyar • WhatsApp: 03009449098
+  </div>
+</div>
+
+<script>
+  function exportTableToCSV(filename, tableId) {
+    const table = document.getElementById(tableId);
+    let csv = [];
+    const rows = table.querySelectorAll('tr');
+    
+    for (let i = 0; i < rows.length; i++) {
+      const row = [], cols = rows[i].querySelectorAll('td, th');
+      
+      for (let j = 0; j < cols.length; j++) {
+        let text = cols[j].innerText.replace(/,/g, ' ');
+        row.push('"' + text + '"');
+      }
+      
+      csv.push(row.join(','));
+    }
+    
+    downloadCSV(csv.join('\n'), filename);
+  }
+  
+  function downloadCSV(csv, filename) {
+    const csvFile = new Blob([csv], {type: 'text/csv'});
+    const downloadLink = document.createElement('a');
+    downloadLink.download = filename;
+    downloadLink.href = window.URL.createObjectURL(csvFile);
+    downloadLink.style.display = 'none';
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+    document.body.removeChild(downloadLink);
+  }
+</script>
+
+<%- include('../partials/footer') %> 

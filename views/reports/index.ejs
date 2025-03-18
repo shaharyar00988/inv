@@ -1,0 +1,104 @@
+<%- include('../partials/header') %>
+
+<div class="container-fluid">
+  <div class="row mb-4">
+    <div class="col">
+      <h2>Reports Dashboard</h2>
+    </div>
+  </div>
+
+  <!-- Summary Cards -->
+  <div class="row mb-4">
+    <div class="col-md-3">
+      <div class="card bg-primary text-white">
+        <div class="card-body">
+          <h5 class="card-title">Total Sales</h5>
+          <h3 class="mb-0"><%= totalSales %></h3>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card bg-success text-white">
+        <div class="card-body">
+          <h5 class="card-title">Total Purchases</h5>
+          <h3 class="mb-0"><%= totalPurchases %></h3>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card bg-info text-white">
+        <div class="card-body">
+          <h5 class="card-title">Customer Balance</h5>
+          <h3 class="mb-0"><%= totalCustomerBalance.toLocaleString('en-US', { style: 'currency', currency: 'PKR' }) %></h3>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card bg-warning text-dark">
+        <div class="card-body">
+          <h5 class="card-title">Supplier Balance</h5>
+          <h3 class="mb-0"><%= totalSupplierBalance.toLocaleString('en-US', { style: 'currency', currency: 'PKR' }) %></h3>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Report Links -->
+  <div class="row">
+    <!-- Transaction Reports -->
+    <div class="col-md-6 mb-4">
+      <div class="card h-100">
+        <div class="card-header">
+          <h5 class="mb-0">Transaction Reports</h5>
+        </div>
+        <div class="card-body">
+          <div class="list-group">
+            <a href="/reports/sales" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+              Sales Report
+              <i class="bi bi-arrow-right"></i>
+            </a>
+            <a href="/reports/purchases" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+              Purchases Report
+              <i class="bi bi-arrow-right"></i>
+            </a>
+            <a href="/reports/profit" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+              Profit Analysis
+              <i class="bi bi-arrow-right"></i>
+            </a>
+            <a href="/reports/cash-flow" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+              Cash Flow
+              <i class="bi bi-arrow-right"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Performance Reports -->
+    <div class="col-md-6 mb-4">
+      <div class="card h-100">
+        <div class="card-header">
+          <h5 class="mb-0">Performance Reports</h5>
+        </div>
+        <div class="card-body">
+          <div class="list-group">
+            <a href="/reports/worker-performance" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+              Worker Performance
+              <i class="bi bi-arrow-right"></i>
+            </a>
+            <a href="/reports/inventory" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+              Inventory Analysis
+              <i class="bi bi-arrow-right"></i>
+            </a>
+            <a href="/reports/balance-summary" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+              Balance Summary
+              <i class="bi bi-arrow-right"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/footer') %> 

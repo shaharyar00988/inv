@@ -1,0 +1,690 @@
+<%- include('../partials/header') %>
+
+<div class="container-fluid">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Create New Sale</h2>
+    <a href="/sales" class="btn btn-outline-secondary">
+      <i class="bi bi-arrow-left"></i> Back to Sales
+    </a>
+  </div>
+  
+  <% if (typeof error !== 'undefined' && error) { %>
+    <div class="alert alert-danger" role="alert">
+      <%= error %>
+    </div>
+  <% } %>
+  
+  <form id="saleForm" action="/sales/new" method="POST">
+    <div class="row">
+      <!-- Sale Info -->
+      <div class="col-md-4">
+        <div class="card mb-4">
+          <div class="card-header">
+            <h5 class="mb-0">Sale Information</h5>
+          </div>
+          <div class="card-body">
+            <div class="mb-3">
+              <label for="invoiceNo" class="form-label">Invoice Number</label>
+              <input type="text" class="form-control" id="invoiceNo" name="invoiceNo" value="<%= invoiceNo %>" required>
+            </div>
+            
+            <div class="mb-3">
+              <label for="date" class="form-label">Date</label>
+              <input type="date" class="form-control" id="date" name="date" value="<%= new Date().toISOString().split('T')[0] %>" required>
+            </div>
+            
+            <div class="mb-3">
+              <label for="customerType" class="form-label">Customer Type</label>
+              <select class="form-select" id="customerType">
+                <option value="walkin" selected>Walk-in Customer</option>
+                <option value="existing">Existing Customer</option>
+              </select>
+            </div>
+            
+            <div class="mb-3" id="existingCustomerDiv" style="display: none;">
+              <label for="customerId" class="form-label">Select Customer</label>
+              <div class="input-group">
+                <input type="text" class="form-control" id="customerSearch" placeholder="Search customer...">
+                <button class="btn btn-outline-secondary" type="button" id="customerSearchBtn">
+                  <i class="bi bi-search"></i>
+                </button>
+              </div>
+              <div id="customerResults" class="mt-2" style="max-height: 200px; overflow-y: auto;"></div>
+              <input type="hidden" id="customerId" name="customerId">
+              <div id="selectedCustomerInfo" class="mt-2"></div>
+            </div>
+            
+            <div class="mb-3">
+              <label for="workerId" class="form-label">Worker</label>
+              <select class="form-select" id="workerId" name="workerId" required>
+                <option value="" selected disabled>Select Worker</option>
+                <% workers.forEach(worker => { %>
+                  <option value="<%= worker.id %>"><%= worker.name %></option>
+                <% }) %>
+              </select>
+            </div>
+            
+            <div class="mb-3">
+              <label for="notes" class="form-label">Notes</label>
+              <textarea class="form-control" id="notes" name="notes" rows="3"></textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Items -->
+      <div class="col-md-8">
+        <div class="card mb-4">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Sale Items</h5>
+            <div>
+              <button type="button" class="btn btn-sm btn-secondary me-2" id="addCustomItemBtn">
+                <i class="bi bi-plus-circle"></i> Custom Item
+              </button>
+              <button type="button" class="btn btn-sm btn-primary" id="addItemBtn">
+                <i class="bi bi-plus"></i> Add Item
+              </button>
+            </div>
+          </div>
+          <div class="card-body">
+            <div id="customItemForm" style="display: none;">
+              <div class="mb-3">
+                <label for="customItemName" class="form-label">Item Name</label>
+                <input type="text" class="form-control" id="customItemName" placeholder="Enter item name">
+              </div>
+              <div class="mb-3">
+                <label for="customItemPrice" class="form-label">Unit Price</label>
+                <div class="input-group">
+                  <span class="input-group-text">Rs.</span>
+                  <input type="number" class="form-control" id="customItemPrice" placeholder="0.00" min="0" step="0.01">
+                </div>
+              </div>
+              <div class="mb-3">
+                <label for="customItemQuantity" class="form-label">Quantity</label>
+                <input type="number" class="form-control" id="customItemQuantity" placeholder="1" min="1" value="1">
+              </div>
+              <div class="d-flex gap-2">
+                <button type="button" class="btn btn-sm btn-primary" id="addCustomItemSubmitBtn">Add Item</button>
+                <button type="button" class="btn btn-sm btn-secondary" id="cancelCustomItemBtn">Cancel</button>
+              </div>
+            </div>
+            
+            <div id="itemSearchContainer" style="display: none;">
+              <div class="mb-3">
+                <label for="itemSearch" class="form-label">Search Item</label>
+                <div class="input-group">
+                  <input type="text" class="form-control" id="itemSearch" placeholder="Start typing to search...">
+                  <button class="btn btn-outline-secondary" type="button" id="itemSearchBtn">
+                    <i class="bi bi-search"></i>
+                  </button>
+                </div>
+                <div id="itemResults" class="mt-2" style="max-height: 200px; overflow-y: auto;"></div>
+              </div>
+              <button type="button" class="btn btn-sm btn-secondary" id="cancelItemBtn">Cancel</button>
+            </div>
+            
+            <div id="itemsContainer">
+              <table class="table table-hover" id="itemsTable">
+                <thead>
+                  <tr>
+                    <th>Item</th>
+                    <th>Type</th>
+                    <th>Quantity</th>
+                    <th>Unit Price</th>
+                    <th>Total</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="itemsTableBody">
+                  <!-- Items will be added here dynamically -->
+                </tbody>
+              </table>
+              <p id="noItemsMessage" class="text-muted text-center my-4">No items added yet</p>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Payment Info -->
+        <div class="card">
+          <div class="card-header">
+            <h5 class="mb-0">Payment Information</h5>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="totalAmount" class="form-label">Total Amount</label>
+                  <div class="input-group">
+                    <span class="input-group-text">Rs.</span>
+                    <input type="number" class="form-control" id="totalAmount" name="totalAmount" value="0" readonly>
+                  </div>
+                </div>
+                
+                <div class="mb-3">
+                  <label for="discount" class="form-label">Discount</label>
+                  <div class="input-group">
+                    <span class="input-group-text">Rs.</span>
+                    <input type="number" class="form-control" id="discount" name="discount" value="0" min="0" step="0.01">
+                  </div>
+                </div>
+              </div>
+              
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="netAmount" class="form-label">Net Amount</label>
+                  <div class="input-group">
+                    <span class="input-group-text">Rs.</span>
+                    <input type="number" class="form-control" id="netAmount" name="netAmount" value="0" readonly>
+                  </div>
+                </div>
+                
+                <div class="mb-3">
+                  <label for="amountPaid" class="form-label">Amount Paid</label>
+                  <div class="input-group">
+                    <span class="input-group-text">Rs.</span>
+                    <input type="number" class="form-control" id="amountPaid" name="amountPaid" value="0" min="0" step="0.01">
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="mb-3">
+              <label for="balance" class="form-label">Balance</label>
+              <div class="input-group">
+                <span class="input-group-text">Rs.</span>
+                <input type="number" class="form-control" id="balance" value="0" readonly>
+              </div>
+            </div>
+            
+            <input type="hidden" id="itemsJson" name="items" value="[]">
+            
+            <div class="d-grid gap-2 mt-4">
+              <button type="submit" class="btn btn-primary" id="submitBtn" disabled>Create Sale</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Variables
+    const items = [];
+    let selectedCustomer = null;
+    
+    // DOM Elements
+    const customerTypeSelect = document.getElementById('customerType');
+    const existingCustomerDiv = document.getElementById('existingCustomerDiv');
+    const customerSearchInput = document.getElementById('customerSearch');
+    const customerSearchBtn = document.getElementById('customerSearchBtn');
+    const customerResults = document.getElementById('customerResults');
+    const customerIdInput = document.getElementById('customerId');
+    const selectedCustomerInfo = document.getElementById('selectedCustomerInfo');
+    
+    const addItemBtn = document.getElementById('addItemBtn');
+    const addCustomItemBtn = document.getElementById('addCustomItemBtn');
+    const customItemForm = document.getElementById('customItemForm');
+    const itemSearchContainer = document.getElementById('itemSearchContainer');
+    const itemsContainer = document.getElementById('itemsContainer');
+    const itemSearchInput = document.getElementById('itemSearch');
+    const itemSearchBtn = document.getElementById('itemSearchBtn');
+    const itemResults = document.getElementById('itemResults');
+    const cancelItemBtn = document.getElementById('cancelItemBtn');
+    
+    // Custom item form elements
+    const customItemName = document.getElementById('customItemName');
+    const customItemPrice = document.getElementById('customItemPrice');
+    const customItemQuantity = document.getElementById('customItemQuantity');
+    const addCustomItemSubmitBtn = document.getElementById('addCustomItemSubmitBtn');
+    const cancelCustomItemBtn = document.getElementById('cancelCustomItemBtn');
+    
+    const itemsTableBody = document.getElementById('itemsTableBody');
+    const noItemsMessage = document.getElementById('noItemsMessage');
+    const itemsTable = document.getElementById('itemsTable');
+    
+    const totalAmountInput = document.getElementById('totalAmount');
+    const discountInput = document.getElementById('discount');
+    const netAmountInput = document.getElementById('netAmount');
+    const amountPaidInput = document.getElementById('amountPaid');
+    const balanceInput = document.getElementById('balance');
+    const itemsJsonInput = document.getElementById('itemsJson');
+    
+    const submitBtn = document.getElementById('submitBtn');
+    
+    // Event Listeners
+    customerTypeSelect.addEventListener('change', function() {
+      if (this.value === 'existing') {
+        existingCustomerDiv.style.display = 'block';
+      } else {
+        existingCustomerDiv.style.display = 'none';
+        customerIdInput.value = '';
+        selectedCustomerInfo.innerHTML = '';
+        selectedCustomer = null;
+      }
+    });
+    
+    customerSearchInput.addEventListener('input', debounce(searchCustomers, 300));
+    customerSearchBtn.addEventListener('click', searchCustomers);
+    
+    addItemBtn.addEventListener('click', function() {
+      itemSearchContainer.style.display = 'block';
+      customItemForm.style.display = 'none';
+      itemSearchInput.focus();
+    });
+    
+    addCustomItemBtn.addEventListener('click', function() {
+      customItemForm.style.display = 'block';
+      itemSearchContainer.style.display = 'none';
+      customItemName.focus();
+    });
+    
+    cancelCustomItemBtn.addEventListener('click', function() {
+      customItemForm.style.display = 'none';
+      customItemName.value = '';
+      customItemPrice.value = '';
+      customItemQuantity.value = '1';
+    });
+    
+    addCustomItemSubmitBtn.addEventListener('click', function() {
+      const name = customItemName.value.trim();
+      const price = parseFloat(customItemPrice.value);
+      const quantity = parseInt(customItemQuantity.value);
+      
+      if (!name || isNaN(price) || price <= 0 || isNaN(quantity) || quantity <= 0) {
+        alert('Please fill in all fields with valid values');
+        return;
+      }
+      
+      const totalPrice = price * quantity;
+      
+      // Create a custom item object
+      const customItem = {
+        id: Date.now(), // Temporary ID for UI
+        name: name,
+        type: 'custom',
+        quantity: quantity,
+        unitPrice: price,
+        totalPrice: totalPrice,
+        isCustom: true
+      };
+      
+      addItemToTable(customItem);
+      customItemForm.style.display = 'none';
+      customItemName.value = '';
+      customItemPrice.value = '';
+      customItemQuantity.value = '1';
+      calculateTotals();
+    });
+    
+    cancelItemBtn.addEventListener('click', function() {
+      itemSearchContainer.style.display = 'none';
+      itemSearchInput.value = '';
+      itemResults.innerHTML = '';
+    });
+    
+    itemSearchInput.addEventListener('input', debounce(searchItems, 300));
+    itemSearchBtn.addEventListener('click', searchItems);
+    
+    discountInput.addEventListener('input', calculateTotals);
+    amountPaidInput.addEventListener('input', calculateTotals);
+    
+    // Functions
+    function debounce(func, delay) {
+      let timeout;
+      return function() {
+        const context = this;
+        const args = arguments;
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(context, args), delay);
+      };
+    }
+    
+    function searchCustomers() {
+      const query = customerSearchInput.value.trim();
+      if (query.length < 2) return;
+      
+      fetch(`/api/customers`)
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+          }
+          return response.json();
+        })
+        .then(data => {
+          customerResults.innerHTML = '';
+          
+          // Ensure data is an array
+          const customers = Array.isArray(data) ? data : [];
+          
+          const filteredCustomers = customers.filter(customer => 
+            customer.name.toLowerCase().includes(query.toLowerCase()) ||
+            (customer.number && customer.number.includes(query))
+          );
+          
+          if (filteredCustomers.length === 0) {
+            customerResults.innerHTML = '<p class="text-muted">No customers found</p>';
+            return;
+          }
+          
+          const list = document.createElement('div');
+          list.className = 'list-group';
+          
+          filteredCustomers.forEach(customer => {
+            const item = document.createElement('button');
+            item.type = 'button';
+            item.className = 'list-group-item list-group-item-action';
+            item.innerHTML = `
+              <div class="d-flex justify-content-between">
+                <h6 class="mb-0">${customer.name}</h6>
+                ${customer.balance > 0 ? `<span class="badge bg-warning">Balance: Rs. ${customer.balance.toFixed(2)}</span>` : ''}
+              </div>
+              ${customer.number ? `<small class="text-muted">${customer.number}</small>` : ''}
+            `;
+            
+            item.addEventListener('click', function() {
+              selectCustomer(customer);
+            });
+            
+            list.appendChild(item);
+          });
+          
+          customerResults.appendChild(list);
+        })
+        .catch(error => {
+          console.error('Error searching customers:', error);
+          customerResults.innerHTML = '<p class="text-danger">Error searching customers. Please try again.</p>';
+        });
+    }
+    
+    function selectCustomer(customer) {
+      selectedCustomer = customer;
+      customerIdInput.value = customer.id;
+      customerResults.innerHTML = '';
+      customerSearchInput.value = '';
+      
+      selectedCustomerInfo.innerHTML = `
+        <div class="card">
+          <div class="card-body p-3">
+            <h6 class="card-title mb-1">${customer.name}</h6>
+            ${customer.number ? `<p class="card-text mb-1 small"><i class="bi bi-telephone"></i> ${customer.number}</p>` : ''}
+            ${customer.address ? `<p class="card-text mb-1 small"><i class="bi bi-geo-alt"></i> ${customer.address}</p>` : ''}
+            ${customer.balance > 0 ? `<p class="card-text mb-0 mt-2"><span class="badge bg-warning">Outstanding Balance: Rs. ${customer.balance.toFixed(2)}</span></p>` : ''}
+          </div>
+        </div>
+      `;
+    }
+    
+    function searchItems() {
+      const query = itemSearchInput.value.trim();
+      if (query.length < 2) return;
+      
+      fetch(`/api/inventory/search?query=${encodeURIComponent(query)}`)
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+          }
+          return response.json();
+        })
+        .then(data => {
+          itemResults.innerHTML = '';
+          
+          // Ensure data is an array
+          const items = Array.isArray(data) ? data : [];
+          
+          if (items.length === 0) {
+            itemResults.innerHTML = '<p class="text-muted">No items found</p>';
+            return;
+          }
+          
+          const list = document.createElement('div');
+          list.className = 'list-group';
+          
+          items.forEach(item => {
+            const listItem = document.createElement('button');
+            listItem.type = 'button';
+            listItem.className = 'list-group-item list-group-item-action';
+            listItem.innerHTML = `
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <h6 class="mb-0">${item.name}</h6>
+                  ${item.urduName ? `<small class="text-muted">${item.urduName}</small>` : ''}
+                </div>
+                <div class="text-end">
+                  <span class="badge ${item.type === 'service' ? 'bg-info' : 'bg-secondary'}">${item.type}</span>
+                  <div>Rs. ${item.retailPrice.toFixed(2)}</div>
+                  ${item.type !== 'service' ? `<small class="text-${item.stock > 5 ? 'success' : 'danger'}">${item.stock} in stock</small>` : ''}
+                </div>
+              </div>
+            `;
+            
+            listItem.addEventListener('click', function() {
+              addItem(item);
+            });
+            
+            list.appendChild(listItem);
+          });
+          
+          itemResults.appendChild(list);
+        })
+        .catch(error => {
+          console.error('Error searching items:', error);
+          itemResults.innerHTML = '<p class="text-danger">Error searching items. Please try again.</p>';
+        });
+    }
+    
+    function addItem(item) {
+      // Check if item is already in the list
+      const existingItemIndex = items.findIndex(i => i.inventoryId === item.id);
+      
+      if (existingItemIndex !== -1) {
+        // Increment quantity if already in list
+        items[existingItemIndex].quantity += 1;
+        items[existingItemIndex].totalPrice = items[existingItemIndex].quantity * items[existingItemIndex].unitPrice;
+      } else {
+        // Add new item
+        items.push({
+          inventoryId: item.id,
+          name: item.name,
+          urduName: item.urduName,
+          type: item.type,
+          quantity: 1,
+          unitPrice: item.retailPrice,
+          totalPrice: item.retailPrice
+        });
+      }
+      
+      // Reset search
+      itemSearchContainer.style.display = 'none';
+      itemSearchInput.value = '';
+      itemResults.innerHTML = '';
+      
+      // Update UI
+      updateItemsTable();
+      calculateTotals();
+    }
+    
+    function addItemToTable(item) {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${item.name}</td>
+        <td>${item.type}</td>
+        <td>${item.quantity}</td>
+        <td>Rs. ${item.unitPrice.toFixed(2)}</td>
+        <td>Rs. ${item.totalPrice.toFixed(2)}</td>
+        <td>
+          <button type="button" class="btn btn-sm btn-danger" onclick="removeItem(${item.id})">
+            <i class="bi bi-trash"></i>
+          </button>
+        </td>
+      `;
+      
+      itemsTableBody.appendChild(row);
+      items.push(item);
+      updateItemsJson();
+      updateUI();
+    }
+    
+    function removeItem(id) {
+      const index = items.findIndex(item => item.id === id);
+      if (index !== -1) {
+        items.splice(index, 1);
+        updateItemsJson();
+        updateUI();
+      }
+    }
+    
+    function updateItemsJson() {
+      itemsJsonInput.value = JSON.stringify(items);
+    }
+    
+    function updateUI() {
+      if (items.length === 0) {
+        itemsTable.style.display = 'none';
+        noItemsMessage.style.display = 'block';
+        submitBtn.disabled = true;
+      } else {
+        itemsTable.style.display = 'table';
+        noItemsMessage.style.display = 'none';
+        submitBtn.disabled = false;
+      }
+    }
+    
+    function updateItemsTable() {
+      if (items.length === 0) {
+        noItemsMessage.style.display = 'block';
+        itemsTable.style.display = 'none';
+        submitBtn.disabled = true;
+        return;
+      }
+      
+      noItemsMessage.style.display = 'none';
+      itemsTable.style.display = 'table';
+      submitBtn.disabled = false;
+      
+      itemsTableBody.innerHTML = '';
+      
+      items.forEach((item, index) => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>
+            ${item.name}
+            ${item.urduName ? `<small class="text-muted d-block">${item.urduName}</small>` : ''}
+          </td>
+          <td><span class="badge ${item.type === 'service' ? 'bg-info' : 'bg-secondary'}">${item.type}</span></td>
+          <td>
+            <div class="input-group input-group-sm">
+              <button type="button" class="btn btn-outline-secondary btn-sm quantity-decrease" data-index="${index}">-</button>
+              <input type="number" class="form-control text-center quantity-input" value="${item.quantity}" min="1" data-index="${index}">
+              <button type="button" class="btn btn-outline-secondary btn-sm quantity-increase" data-index="${index}">+</button>
+            </div>
+          </td>
+          <td>
+            <div class="input-group input-group-sm">
+              <span class="input-group-text">Rs.</span>
+              <input type="number" class="form-control price-input" value="${item.unitPrice.toFixed(2)}" min="0" step="0.01" data-index="${index}">
+            </div>
+          </td>
+          <td>Rs. ${item.totalPrice.toFixed(2)}</td>
+          <td>
+            <button type="button" class="btn btn-sm btn-danger remove-item" data-index="${index}">
+              <i class="bi bi-trash"></i>
+            </button>
+          </td>
+        `;
+        
+        itemsTableBody.appendChild(row);
+      });
+      
+      // Add event listeners to the new elements
+      document.querySelectorAll('.quantity-decrease').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const index = parseInt(this.dataset.index);
+          if (items[index].quantity > 1) {
+            items[index].quantity -= 1;
+            items[index].totalPrice = items[index].quantity * items[index].unitPrice;
+            updateItemsTable();
+            calculateTotals();
+          }
+        });
+      });
+      
+      document.querySelectorAll('.quantity-increase').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const index = parseInt(this.dataset.index);
+          items[index].quantity += 1;
+          items[index].totalPrice = items[index].quantity * items[index].unitPrice;
+          updateItemsTable();
+          calculateTotals();
+        });
+      });
+      
+      document.querySelectorAll('.quantity-input').forEach(input => {
+        input.addEventListener('change', function() {
+          const index = parseInt(this.dataset.index);
+          const value = parseInt(this.value);
+          if (value < 1) {
+            this.value = 1;
+            items[index].quantity = 1;
+          } else {
+            items[index].quantity = value;
+          }
+          items[index].totalPrice = items[index].quantity * items[index].unitPrice;
+          updateItemsTable();
+          calculateTotals();
+        });
+      });
+      
+      document.querySelectorAll('.price-input').forEach(input => {
+        input.addEventListener('change', function() {
+          const index = parseInt(this.dataset.index);
+          const value = parseFloat(this.value);
+          if (value < 0) {
+            this.value = 0;
+            items[index].unitPrice = 0;
+          } else {
+            items[index].unitPrice = value;
+          }
+          items[index].totalPrice = items[index].quantity * items[index].unitPrice;
+          updateItemsTable();
+          calculateTotals();
+        });
+      });
+      
+      document.querySelectorAll('.remove-item').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const index = parseInt(this.dataset.index);
+          items.splice(index, 1);
+          updateItemsTable();
+          calculateTotals();
+        });
+      });
+    }
+    
+    function calculateTotals() {
+      // Calculate total amount
+      const total = items.reduce((sum, item) => sum + item.totalPrice, 0);
+      totalAmountInput.value = total.toFixed(2);
+      
+      // Calculate net amount (total - discount)
+      const discount = parseFloat(discountInput.value) || 0;
+      const netAmount = Math.max(0, total - discount);
+      netAmountInput.value = netAmount.toFixed(2);
+      
+      // Calculate balance (net amount - amount paid)
+      const amountPaid = parseFloat(amountPaidInput.value) || 0;
+      const balance = Math.max(0, netAmount - amountPaid);
+      balanceInput.value = balance.toFixed(2);
+      
+      // Update items JSON for form submission
+      itemsJsonInput.value = JSON.stringify(items);
+    }
+    
+    // Initialize UI
+    updateItemsTable();
+    calculateTotals();
+  });
+</script>
+
+<%- include('../partials/footer') %> 

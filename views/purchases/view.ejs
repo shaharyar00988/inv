@@ -1,0 +1,130 @@
+<%- include('../partials/header') %>
+
+<div class="container-fluid">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Purchase Details</h2>
+    <div>
+      <div class="btn-group me-2">
+        <a href="/invoices/purchases/<%= purchase.id %>/normal" target="_blank" class="btn btn-success">
+          <i class="bi bi-printer"></i> Print Invoice
+        </a>
+        <a href="/invoices/purchases/<%= purchase.id %>/thermal" target="_blank" class="btn btn-outline-success">
+          <i class="bi bi-receipt"></i> Thermal Receipt
+        </a>
+      </div>
+      <a href="/purchases" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i> Back to Purchases
+      </a>
+    </div>
+  </div>
+  
+  <% if (typeof error !== 'undefined' && error) { %>
+    <div class="alert alert-danger" role="alert">
+      <%= error %>
+    </div>
+  <% } %>
+  
+  <div class="row">
+    <!-- Purchase Details -->
+    <div class="col-md-4">
+      <div class="card mb-4">
+        <div class="card-header">
+          <h5 class="mb-0">Purchase Information</h5>
+        </div>
+        <div class="card-body">
+          <div class="mb-3">
+            <label class="form-label text-muted">Date</label>
+            <div><%= new Date(purchase.date).toLocaleDateString() %></div>
+          </div>
+          
+          <div class="mb-3">
+            <label class="form-label text-muted">Supplier</label>
+            <div><%= purchase.supplier ? purchase.supplier.name : 'N/A' %></div>
+            <% if (purchase.supplier && purchase.supplier.number) { %>
+              <small class="text-muted"><i class="bi bi-telephone me-1"></i><%= purchase.supplier.number %></small>
+            <% } %>
+          </div>
+          
+          <div class="mb-3">
+            <label class="form-label text-muted">Total Amount</label>
+            <div class="fs-5 fw-bold">Rs. <%= purchase.totalAmount.toFixed(2) %></div>
+          </div>
+          
+          <div class="mb-3">
+            <label class="form-label text-muted">Amount Paid</label>
+            <div>Rs. <%= purchase.amountPaid.toFixed(2) %></div>
+          </div>
+          
+          <div class="mb-3">
+            <label class="form-label text-muted">Balance</label>
+            <div class="<%= (purchase.totalAmount - purchase.amountPaid) > 0 ? 'text-danger' : 'text-success' %>">
+              Rs. <%= (purchase.totalAmount - purchase.amountPaid).toFixed(2) %>
+            </div>
+          </div>
+          
+          <% if (purchase.notes) { %>
+            <div class="mb-3">
+              <label class="form-label text-muted">Notes</label>
+              <div><%= purchase.notes %></div>
+            </div>
+          <% } %>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Purchase Items -->
+    <div class="col-md-8">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">Purchase Items</h5>
+          <span class="badge bg-primary"><%= purchase.items.length %> items</span>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th>Item</th>
+                  <th>Type</th>
+                  <th>Quantity</th>
+                  <th>Purchase Price</th>
+                  <th>Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% if (purchase.items && purchase.items.length > 0) { %>
+                  <% purchase.items.forEach(item => { %>
+                    <tr>
+                      <td>
+                        <%= item.inventory.name %>
+                        <% if (item.inventory.urduName) { %>
+                          <small class="text-muted d-block"><%= item.inventory.urduName %></small>
+                        <% } %>
+                      </td>
+                      <td><span class="badge <%= item.inventory.type === 'service' ? 'bg-info' : 'bg-secondary' %>"><%= item.inventory.type %></span></td>
+                      <td><%= item.quantity %></td>
+                      <td>Rs. <%= item.price.toFixed(2) %></td>
+                      <td>Rs. <%= (item.quantity * item.price).toFixed(2) %></td>
+                    </tr>
+                  <% }) %>
+                <% } else { %>
+                  <tr>
+                    <td colspan="5" class="text-center">No items found</td>
+                  </tr>
+                <% } %>
+              </tbody>
+              <tfoot>
+                <tr class="table-light">
+                  <td colspan="4" class="text-end fw-bold">Total:</td>
+                  <td class="fw-bold">Rs. <%= purchase.totalAmount.toFixed(2) %></td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/footer') %> 

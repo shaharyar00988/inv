@@ -1,0 +1,252 @@
+<%- include('../partials/header') %>
+
+<!-- Add print stylesheet -->
+<link rel="stylesheet" href="/css/print.css">
+
+<div class="container-fluid">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Cash Flow Report</h2>
+    <div class="no-print">
+      <button class="btn btn-primary me-2" onclick="window.print()">
+        <i class="bi bi-printer"></i> Print Report
+      </button>
+      <a href="/reports" class="btn btn-secondary">
+        <i class="bi bi-arrow-left"></i> Back to Reports
+      </a>
+    </div>
+  </div>
+
+  <!-- Date Filter -->
+  <div class="card mb-4 filter-section">
+    <div class="card-body">
+      <form action="/reports/cash-flow" method="GET" class="row g-3">
+        <div class="col-md-4">
+          <label for="startDate" class="form-label">Start Date</label>
+          <input type="date" class="form-control" id="startDate" name="startDate" value="<%= startDate %>">
+        </div>
+        <div class="col-md-4">
+          <label for="endDate" class="form-label">End Date</label>
+          <input type="date" class="form-control" id="endDate" name="endDate" value="<%= endDate %>">
+        </div>
+        <div class="col-md-4 d-flex align-items-end">
+          <button type="submit" class="btn btn-primary">
+            <i class="bi bi-filter"></i> Apply Filter
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Report Header for Print -->
+  <div class="report-header d-none d-print-block">
+    <div class="report-title">Cash Flow Report</div>
+    <div class="report-date">
+      Period: <%= new Date(startDate).toLocaleDateString() %> - <%= new Date(endDate).toLocaleDateString() %>
+    </div>
+  </div>
+
+  <!-- Summary Cards -->
+  <div class="row mb-4 avoid-break">
+    <div class="col-md-4">
+      <div class="card bg-light">
+        <div class="card-body text-center">
+          <h6 class="card-title">Total Inflow</h6>
+          <h3 class="text-success"><%= totalInflow.toLocaleString('en-US', { style: 'currency', currency: 'PKR' }) %></h3>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card bg-light">
+        <div class="card-body text-center">
+          <h6 class="card-title">Total Outflow</h6>
+          <h3 class="text-danger"><%= totalOutflow.toLocaleString('en-US', { style: 'currency', currency: 'PKR' }) %></h3>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card bg-light">
+        <div class="card-body text-center">
+          <h6 class="card-title">Net Flow</h6>
+          <h3 class="<%= netFlow >= 0 ? 'text-success' : 'text-danger' %>">
+            <%= netFlow.toLocaleString('en-US', { style: 'currency', currency: 'PKR' }) %>
+          </h3>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cash Flow Timeline -->
+  <div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <h5 class="mb-0">Cash Flow Timeline</h5>
+      <button class="btn btn-sm btn-outline-primary no-print" onclick="exportTableToCSV('cash-flow-report.csv')">
+        <i class="bi bi-download"></i> Export to CSV
+      </button>
+    </div>
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table table-striped" id="cashFlowTable">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Description</th>
+              <th class="text-end">Inflow</th>
+              <th class="text-end">Outflow</th>
+              <th class="text-end">Net Flow</th>
+              <th class="text-end">Running Balance</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if (cashFlowData && cashFlowData.length > 0) { %>
+              <% 
+                let runningBalance = 0;
+                cashFlowData.forEach(day => { 
+                  runningBalance += day.netFlow;
+              %>
+                <tr>
+                  <td><%= new Date(day.date).toLocaleDateString() %></td>
+                  <td>
+                    <% if (day.details && day.details.length > 0) { %>
+                      <ul class="list-unstyled mb-0">
+                        <% day.details.forEach(detail => { %>
+                          <li><%= detail.description %></li>
+                        <% }); %>
+                      </ul>
+                    <% } else { %>
+                      Daily transactions
+                    <% } %>
+                  </td>
+                  <td class="text-end text-success"><%= day.inflow.toLocaleString('en-US', { style: 'currency', currency: 'PKR' }) %></td>
+                  <td class="text-end text-danger"><%= day.outflow.toLocaleString('en-US', { style: 'currency', currency: 'PKR' }) %></td>
+                  <td class="text-end <%= day.netFlow >= 0 ? 'text-success' : 'text-danger' %>">
+                    <%= day.netFlow.toLocaleString('en-US', { style: 'currency', currency: 'PKR' }) %>
+                  </td>
+                  <td class="text-end <%= runningBalance >= 0 ? 'text-success' : 'text-danger' %>">
+                    <%= runningBalance.toLocaleString('en-US', { style: 'currency', currency: 'PKR' }) %>
+                  </td>
+                </tr>
+              <% }); %>
+            <% } else { %>
+              <tr>
+                <td colspan="6" class="text-center">No cash flow data found for the selected period</td>
+              </tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cash Flow Chart -->
+  <div class="card mt-4 avoid-break">
+    <div class="card-header">
+      <h5 class="mb-0">Cash Flow Trend</h5>
+    </div>
+    <div class="card-body">
+      <canvas id="cashFlowChart"></canvas>
+    </div>
+  </div>
+
+  <!-- Developer Credit -->
+  <div class="developer-credit d-none d-print-block">
+    Developed by Shaharyar • WhatsApp: 03009449098
+  </div>
+</div>
+
+<script>
+  // Export to CSV function
+  function exportTableToCSV(filename) {
+    const table = document.getElementById('cashFlowTable');
+    let csv = [];
+    const rows = table.querySelectorAll('tr');
+    
+    for (let i = 0; i < rows.length; i++) {
+      const row = [], cols = rows[i].querySelectorAll('td, th');
+      
+      for (let j = 0; j < cols.length; j++) {
+        let text = cols[j].innerText.replace(/,/g, ' ');
+        row.push('"' + text + '"');
+      }
+      
+      csv.push(row.join(','));
+    }
+    
+    downloadCSV(csv.join('\n'), filename);
+  }
+  
+  function downloadCSV(csv, filename) {
+    const csvFile = new Blob([csv], {type: 'text/csv'});
+    const downloadLink = document.createElement('a');
+    downloadLink.download = filename;
+    downloadLink.href = window.URL.createObjectURL(csvFile);
+    downloadLink.style.display = 'none';
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+    document.body.removeChild(downloadLink);
+  }
+
+  // Chart.js initialization
+  document.addEventListener('DOMContentLoaded', function() {
+    const ctx = document.getElementById('cashFlowChart').getContext('2d');
+    
+    const data = {
+      labels: <%- JSON.stringify(cashFlowData.map(day => new Date(day.date).toLocaleDateString())) %>,
+      datasets: [
+        {
+          label: 'Inflow',
+          data: <%- JSON.stringify(cashFlowData.map(day => day.inflow)) %>,
+          borderColor: '#198754',
+          backgroundColor: 'rgba(25, 135, 84, 0.1)',
+          fill: true
+        },
+        {
+          label: 'Outflow',
+          data: <%- JSON.stringify(cashFlowData.map(day => day.outflow)) %>,
+          borderColor: '#dc3545',
+          backgroundColor: 'rgba(220, 53, 69, 0.1)',
+          fill: true
+        },
+        {
+          label: 'Net Flow',
+          data: <%- JSON.stringify(cashFlowData.map(day => day.netFlow)) %>,
+          borderColor: '#0d6efd',
+          backgroundColor: 'rgba(13, 110, 253, 0.1)',
+          fill: true
+        }
+      ]
+    };
+
+    new Chart(ctx, {
+      type: 'line',
+      data: data,
+      options: {
+        responsive: true,
+        interaction: {
+          intersect: false,
+          mode: 'index'
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              callback: function(value) {
+                return 'PKR ' + value.toLocaleString();
+              }
+            }
+          }
+        },
+        plugins: {
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                return context.dataset.label + ': PKR ' + context.parsed.y.toLocaleString();
+              }
+            }
+          }
+        }
+      }
+    });
+  });
+</script>
+
+<%- include('../partials/footer') %> 

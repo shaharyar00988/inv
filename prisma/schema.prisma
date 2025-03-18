@@ -1,0 +1,249 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  username  String   @unique
+  password  String
+  name      String?
+  role      String   @default("user")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  driveToken DriveToken?
+}
+
+model DriveToken {
+  id          Int      @id @default(autoincrement())
+  userId      Int      @unique
+  user        User     @relation(fields: [userId], references: [id])
+  accessToken String
+  refreshToken String?
+  folderId    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Inventory {
+  id                 Int                  @id @default(autoincrement())
+  name               String
+  urduName           String?
+  type               String // "service" or "part"
+  purchasePrice      Float
+  retailPrice        Float
+  stock              Int                  @default(0)
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+  salesItems         SalesItem[]
+  purchaseItems      PurchaseItem[]
+  customerReturnItems CustomerReturnItem[]
+  supplierReturnItems SupplierReturnItem[]
+}
+
+model Customer {
+  id              Int              @id @default(autoincrement())
+  name            String
+  address         String?
+  number          String?
+  balance         Float            @default(0)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  sales           Sales[]
+  customerReturns CustomerReturn[]
+  payments        Payment[]
+}
+
+model Supplier {
+  id              Int               @id @default(autoincrement())
+  name            String
+  address         String?
+  number          String?
+  balance         Float             @default(0)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  purchases       Purchase[]
+  supplierReturns SupplierReturn[]
+  payments        SupplierPayment[]
+}
+
+model Worker {
+  id        Int      @id @default(autoincrement())
+  name      String
+  address   String?
+  number    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  sales     Sales[]
+}
+
+model Sales {
+  id          Int         @id @default(autoincrement())
+  invoiceNo   String?     @unique
+  date        DateTime    @default(now())
+  totalAmount Float       @default(0)
+  discount    Float       @default(0)
+  netAmount   Float       @default(0)
+  amountPaid  Float       @default(0)
+  notes       String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  
+  customerId  Int?
+  customer    Customer?   @relation(fields: [customerId], references: [id])
+  workerId    Int
+  worker      Worker      @relation(fields: [workerId], references: [id])
+  
+  items       SalesItem[]
+}
+
+model SalesItem {
+  id          Int        @id @default(autoincrement())
+  quantity    Int
+  unitPrice   Float
+  totalPrice  Float
+  isCustom    Boolean    @default(false)
+  customItemName String?
+  
+  salesId     Int
+  sales       Sales      @relation(fields: [salesId], references: [id], onDelete: Cascade)
+  inventoryId Int?
+  inventory   Inventory? @relation(fields: [inventoryId], references: [id])
+}
+
+model Purchase {
+  id          Int           @id @default(autoincrement())
+  date        DateTime      @default(now())
+  totalAmount Float         @default(0)
+  amountPaid  Float         @default(0)
+  notes       String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  
+  supplierId  Int?
+  supplier    Supplier?     @relation(fields: [supplierId], references: [id])
+  
+  items       PurchaseItem[]
+}
+
+model PurchaseItem {
+  id          Int        @id @default(autoincrement())
+  quantity    Int
+  price       Float
+  
+  purchaseId  Int
+  purchase    Purchase   @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+  inventoryId Int
+  inventory   Inventory  @relation(fields: [inventoryId], references: [id])
+}
+
+model CustomerReturn {
+  id           Int                 @id @default(autoincrement())
+  date         DateTime            @default(now())
+  totalAmount  Float               @default(0)
+  refundAmount Float               @default(0)
+  reason       String?
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+  
+  customerId   Int?
+  customer     Customer?           @relation(fields: [customerId], references: [id])
+  
+  items        CustomerReturnItem[]
+}
+
+model CustomerReturnItem {
+  id               Int            @id @default(autoincrement())
+  quantity         Int
+  price            Float
+  
+  customerReturnId Int
+  customerReturn   CustomerReturn @relation(fields: [customerReturnId], references: [id], onDelete: Cascade)
+  inventoryId      Int
+  inventory        Inventory      @relation(fields: [inventoryId], references: [id])
+}
+
+model SupplierReturn {
+  id           Int                 @id @default(autoincrement())
+  date         DateTime            @default(now())
+  totalAmount  Float               @default(0)
+  refundAmount Float               @default(0)
+  reason       String?
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+  
+  supplierId   Int?
+  supplier     Supplier?           @relation(fields: [supplierId], references: [id])
+  
+  items        SupplierReturnItem[]
+}
+
+model SupplierReturnItem {
+  id               Int            @id @default(autoincrement())
+  quantity         Int
+  price            Float
+  
+  supplierReturnId Int
+  supplierReturn   SupplierReturn @relation(fields: [supplierReturnId], references: [id], onDelete: Cascade)
+  inventoryId      Int
+  inventory        Inventory      @relation(fields: [inventoryId], references: [id])
+}
+
+model Settings {
+  id        Int      @id @default(autoincrement())
+  shopName  String?
+  address   String?
+  phone     String?
+  email     String?
+  taxId     String?
+  footer    String?
+  shopLogo  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Expense {
+  id           Int      @id @default(autoincrement())
+  description  String
+  category     String
+  amount       Float
+  date         DateTime @default(now())
+  paymentMethod String   @default("Cash")
+  reference    String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Payment {
+  id            Int      @id @default(autoincrement())
+  customerId    Int
+  customer      Customer @relation(fields: [customerId], references: [id])
+  amount        Float
+  paymentMethod String
+  reference     String?
+  date          DateTime @default(now())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model SupplierPayment {
+  id            Int      @id @default(autoincrement())
+  supplierId    Int
+  supplier      Supplier @relation(fields: [supplierId], references: [id])
+  amount        Float
+  paymentMethod String
+  reference     String?
+  date          DateTime @default(now())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}

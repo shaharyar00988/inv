@@ -1,0 +1,166 @@
+<%- include('../partials/header') %>
+
+<div class="container-fluid">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Purchases Report</h2>
+    <a href="/reports" class="btn btn-secondary">
+      <i class="bi bi-arrow-left"></i> Back to Reports
+    </a>
+  </div>
+  
+  <!-- Date Filter Form -->
+  <div class="card mb-4">
+    <div class="card-body">
+      <form action="/reports/purchases" method="GET" class="row g-3">
+        <div class="col-md-4">
+          <label for="startDate" class="form-label">Start Date</label>
+          <input type="date" class="form-control" id="startDate" name="startDate" value="<%= startDate %>">
+        </div>
+        <div class="col-md-4">
+          <label for="endDate" class="form-label">End Date</label>
+          <input type="date" class="form-control" id="endDate" name="endDate" value="<%= endDate %>">
+        </div>
+        <div class="col-md-4 d-flex align-items-end">
+          <button type="submit" class="btn btn-success w-100">
+            <i class="bi bi-filter"></i> Apply Filter
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+  
+  <!-- Summary Cards -->
+  <div class="row mb-4">
+    <div class="col-md-3 mb-3">
+      <div class="card bg-light h-100">
+        <div class="card-body text-center">
+          <h6 class="card-title">Total Purchases</h6>
+          <h3 class="mb-0"><%= totalPurchases %></h3>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3 mb-3">
+      <div class="card bg-light h-100">
+        <div class="card-body text-center">
+          <h6 class="card-title">Total Amount</h6>
+          <h3 class="mb-0">$<%= totalAmount.toFixed(2) %></h3>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3 mb-3">
+      <div class="card bg-light h-100">
+        <div class="card-body text-center">
+          <h6 class="card-title">Amount Paid</h6>
+          <h3 class="mb-0">$<%= totalAmountPaid.toFixed(2) %></h3>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3 mb-3">
+      <div class="card bg-light h-100">
+        <div class="card-body text-center">
+          <h6 class="card-title">Balance Due</h6>
+          <h3 class="mb-0">$<%= totalBalanceDue.toFixed(2) %></h3>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Purchases Table -->
+  <div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <h5 class="mb-0">Purchases List</h5>
+      <button class="btn btn-sm btn-outline-success" onclick="exportTableToCSV('purchases-report.csv')">
+        <i class="bi bi-download"></i> Export to CSV
+      </button>
+    </div>
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table table-striped table-hover" id="purchasesTable">
+          <thead>
+            <tr>
+              <th>Purchase #</th>
+              <th>Date</th>
+              <th>Supplier</th>
+              <th>Items</th>
+              <th class="text-end">Total</th>
+              <th class="text-end">Paid</th>
+              <th class="text-end">Balance</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if (purchases.length === 0) { %>
+              <tr>
+                <td colspan="8" class="text-center">No purchases found for the selected date range</td>
+              </tr>
+            <% } else { %>
+              <% purchases.forEach(purchase => { %>
+                <tr>
+                  <td><%= purchase.id %></td>
+                  <td><%= new Date(purchase.date).toLocaleDateString() %></td>
+                  <td><%= purchase.supplier ? purchase.supplier.name : 'One-time Supplier' %></td>
+                  <td><%= purchase.items.length %></td>
+                  <td class="text-end">$<%= purchase.totalAmount.toFixed(2) %></td>
+                  <td class="text-end">$<%= purchase.amountPaid.toFixed(2) %></td>
+                  <td class="text-end">$<%= (purchase.totalAmount - purchase.amountPaid).toFixed(2) %></td>
+                  <td>
+                    <a href="/purchases/<%= purchase.id %>" class="btn btn-sm btn-outline-success">
+                      <i class="bi bi-eye"></i>
+                    </a>
+                    <a href="/invoices/purchases/<%= purchase.id %>" class="btn btn-sm btn-outline-info" target="_blank">
+                      <i class="bi bi-printer"></i>
+                    </a>
+                  </td>
+                </tr>
+              <% }) %>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function exportTableToCSV(filename) {
+    const table = document.getElementById('purchasesTable');
+    let csv = [];
+    const rows = table.querySelectorAll('tr');
+    
+    for (let i = 0; i < rows.length; i++) {
+      const row = [], cols = rows[i].querySelectorAll('td, th');
+      
+      for (let j = 0; j < cols.length - 1; j++) { // Skip the Actions column
+        // Get the text content and remove any commas to avoid CSV issues
+        let text = cols[j].innerText.replace(/,/g, ' ');
+        row.push('"' + text + '"');
+      }
+      
+      csv.push(row.join(','));
+    }
+    
+    // Download CSV file
+    downloadCSV(csv.join('\n'), filename);
+  }
+  
+  function downloadCSV(csv, filename) {
+    const csvFile = new Blob([csv], {type: 'text/csv'});
+    const downloadLink = document.createElement('a');
+    
+    // Create a download link
+    downloadLink.download = filename;
+    downloadLink.href = window.URL.createObjectURL(csvFile);
+    downloadLink.style.display = 'none';
+    
+    // Add the link to the DOM
+    document.body.appendChild(downloadLink);
+    
+    // Click the download link
+    downloadLink.click();
+    
+    // Clean up
+    document.body.removeChild(downloadLink);
+  }
+</script>
+
+<%- include('../partials/footer') %> 

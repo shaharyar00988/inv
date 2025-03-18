@@ -1,0 +1,96 @@
+<%- include('../partials/header') %>
+
+<div class="container-fluid">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Sales</h2>
+    <a href="/sales/new" class="btn btn-primary">
+      <i class="bi bi-plus-lg"></i> New Sale
+    </a>
+  </div>
+  
+  <% if (typeof error !== 'undefined' && error) { %>
+    <div class="alert alert-danger" role="alert">
+      <%= error %>
+    </div>
+  <% } %>
+  
+  <!-- Search Form -->
+  <div class="card mb-4">
+    <div class="card-body">
+      <form action="/sales" method="GET" class="row g-3">
+        <div class="col-md-10">
+          <input type="text" name="search" class="form-control" placeholder="Search by invoice number, customer name, or worker name" value="<%= search || '' %>">
+        </div>
+        <div class="col-md-2">
+          <button type="submit" class="btn btn-primary w-100">Search</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  
+  <div class="card">
+    <div class="card-body">
+      <% if (typeof sales !== 'undefined' && sales.length > 0) { %>
+        <div class="table-responsive">
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>Invoice #</th>
+                <th>Date</th>
+                <th>Customer</th>
+                <th>Worker</th>
+                <th>Total Amount</th>
+                <th>Discount</th>
+                <th>Net Amount</th>
+                <th>Paid</th>
+                <th>Balance</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% sales.forEach(sale => { %>
+                <tr>
+                  <td><%= sale.invoiceNo || `INV-${sale.id}` %></td>
+                  <td><%= new Date(sale.date).toLocaleDateString() %></td>
+                  <td><%= sale.customer ? sale.customer.name : 'Walk-in' %></td>
+                  <td><%= sale.worker ? sale.worker.name : 'N/A' %></td>
+                  <td>Rs. <%= sale.totalAmount.toFixed(2) %></td>
+                  <td>Rs. <%= sale.discount.toFixed(2) %></td>
+                  <td>Rs. <%= sale.netAmount.toFixed(2) %></td>
+                  <td>Rs. <%= sale.amountPaid.toFixed(2) %></td>
+                  <td>Rs. <%= (sale.netAmount - sale.amountPaid).toFixed(2) %></td>
+                  <td>
+                    <% if (sale.amountPaid >= sale.netAmount) { %>
+                      <span class="badge bg-success">Paid</span>
+                    <% } else if (sale.amountPaid > 0) { %>
+                      <span class="badge bg-warning">Partial</span>
+                    <% } else { %>
+                      <span class="badge bg-danger">Unpaid</span>
+                    <% } %>
+                  </td>
+                  <td>
+                    <a href="/sales/<%= sale.id %>" class="btn btn-sm btn-info">View</a>
+                    <button type="button" class="btn btn-sm btn-danger" 
+                      onclick="showDeleteConfirmation(
+                        'Sale #<%= sale.invoiceNo || sale.id %>', 
+                        '/sales/<%= sale.id %>/delete',
+                        'This will permanently delete this sale and update inventory quantities.'
+                      )">
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      <% } else { %>
+        <p class="text-muted text-center my-4">No sales records found</p>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/delete-modal') %>
+<%- include('../partials/footer') %> 

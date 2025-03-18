@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Supplier Return Receipt</title>
+  <style>
+    @page {
+      size: 80mm 297mm;
+      margin: 0;
+    }
+    body {
+      font-family: 'Courier New', monospace;
+      width: 80mm;
+      margin: 0 auto;
+      padding: 5mm;
+      font-size: 12px;
+      line-height: 1.2;
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 5mm;
+    }
+    .shop-name {
+      font-size: 16px;
+      font-weight: bold;
+      margin-bottom: 2mm;
+    }
+    .title {
+      font-size: 14px;
+      font-weight: bold;
+      text-align: center;
+      border-top: 1px dashed #000;
+      border-bottom: 1px dashed #000;
+      padding: 2mm 0;
+      margin: 3mm 0;
+    }
+    .info {
+      margin-bottom: 5mm;
+    }
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 1mm;
+    }
+    .info-label {
+      font-weight: bold;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 5mm;
+    }
+    th, td {
+      text-align: left;
+      padding: 1mm 0;
+    }
+    th:last-child, td:last-child {
+      text-align: right;
+    }
+    .totals {
+      margin-top: 3mm;
+      border-top: 1px dashed #000;
+      padding-top: 2mm;
+    }
+    .total-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 1mm;
+    }
+    .total-label {
+      font-weight: bold;
+    }
+    .footer {
+      text-align: center;
+      margin-top: 5mm;
+      font-size: 10px;
+    }
+    .buttons {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 10mm;
+    }
+    .btn {
+      padding: 2mm 5mm;
+      background-color: #f0f0f0;
+      border: 1px solid #ccc;
+      cursor: pointer;
+      text-decoration: none;
+      color: #000;
+      font-size: 12px;
+    }
+    .logo {
+      max-width: 40mm;
+      max-height: 15mm;
+      margin: 0 0 3mm 0;
+      display: block;
+    }
+    .default-logo {
+      width: 20mm;
+      height: 20mm;
+      margin: 0 auto 3mm;
+      border: 1px solid #ddd;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 16px;
+    }
+    @media print {
+      .buttons {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <% if (settings && settings.shopLogo) { %>
+      <img src="/uploads/<%= settings.shopLogo %>" alt="Logo" class="logo">
+    <% } else { %>
+      <div class="default-logo">
+        <%= settings ? settings.shopName.substring(0, 2).toUpperCase() : 'LG' %>
+      </div>
+    <% } %>
+    <div class="shop-name"><%= settings?.shopName || 'Your Shop Name' %></div>
+    <div><%= settings?.address || 'Shop Address' %></div>
+    <div>Phone: <%= settings?.phone || 'Phone Number' %></div>
+    <% if (settings?.email) { %>
+    <div>Email: <%= settings.email %></div>
+    <% } %>
+  </div>
+
+  <div class="title">SUPPLIER RETURN RECEIPT</div>
+
+  <div class="info">
+    <div class="info-row">
+      <span class="info-label">Return #:</span>
+      <span><%= returnData.id %></span>
+    </div>
+    <div class="info-row">
+      <span class="info-label">Date:</span>
+      <span><%= new Date(returnData.date).toLocaleDateString() %></span>
+    </div>
+    <div class="info-row">
+      <span class="info-label">Supplier:</span>
+      <span><%= returnData.supplier ? returnData.supplier.name : 'One-time Supplier' %></span>
+    </div>
+    <% if (returnData.supplier && returnData.supplier.number) { %>
+    <div class="info-row">
+      <span class="info-label">Phone:</span>
+      <span><%= returnData.supplier.number %></span>
+    </div>
+    <% } %>
+    <% if (returnData.reason) { %>
+    <div class="info-row">
+      <span class="info-label">Reason:</span>
+      <span><%= returnData.reason %></span>
+    </div>
+    <% } %>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Item</th>
+        <th>Qty</th>
+        <th>Price</th>
+        <th>Total</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% returnData.items.forEach(item => { %>
+      <tr>
+        <td><%= item.inventory.name %></td>
+        <td><%= item.quantity %></td>
+        <td>Rs. <%= item.price.toFixed(2) %></td>
+        <td>Rs. <%= (item.quantity * item.price).toFixed(2) %></td>
+      </tr>
+      <% }); %>
+    </tbody>
+  </table>
+
+  <div class="totals">
+    <div class="total-row">
+      <span class="total-label">Total Amount:</span>
+      <span>Rs. <%= returnData.totalAmount.toFixed(2) %></span>
+    </div>
+    <div class="total-row">
+      <span class="total-label">Refund Amount:</span>
+      <span>Rs. <%= returnData.refundAmount.toFixed(2) %></span>
+    </div>
+  </div>
+
+  <div class="footer">
+    <p>Thank you for your business!</p>
+    <p>Generated on <%= new Date().toLocaleString() %></p>
+  </div>
+
+  <div class="buttons">
+    <button class="btn" onclick="window.print()">Print</button>
+    <a href="/returns" class="btn">Back</a>
+  </div>
+
+  <script>
+    // Auto print when page loads
+    window.onload = function() {
+      // Uncomment the line below to automatically print when page loads
+      // window.print();
+    };
+  </script>
+</body>
+</html> 

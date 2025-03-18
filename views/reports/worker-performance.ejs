@@ -1,0 +1,191 @@
+<%- include('../partials/header') %>
+
+<!-- Add print stylesheet -->
+<link rel="stylesheet" href="/css/print.css">
+
+<div class="container-fluid">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Worker Performance Report</h2>
+    <div class="no-print">
+      <button class="btn btn-primary me-2" onclick="window.print()">
+        <i class="bi bi-printer"></i> Print Report
+      </button>
+      <a href="/reports" class="btn btn-secondary">
+        <i class="bi bi-arrow-left"></i> Back to Reports
+      </a>
+    </div>
+  </div>
+
+  <!-- Date Filter -->
+  <div class="card mb-4 filter-section">
+    <div class="card-body">
+      <form action="/reports/worker-performance" method="GET" class="row g-3">
+        <div class="col-md-4">
+          <label for="startDate" class="form-label">Start Date</label>
+          <input type="date" class="form-control" id="startDate" name="startDate" value="<%= startDate %>">
+        </div>
+        <div class="col-md-4">
+          <label for="endDate" class="form-label">End Date</label>
+          <input type="date" class="form-control" id="endDate" name="endDate" value="<%= endDate %>">
+        </div>
+        <div class="col-md-4 d-flex align-items-end">
+          <button type="submit" class="btn btn-primary">
+            <i class="bi bi-filter"></i> Apply Filter
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Report Header for Print -->
+  <div class="report-header d-none d-print-block">
+    <div class="report-title">Worker Performance Report</div>
+    <div class="report-date">
+      Period: <%= new Date(startDate).toLocaleDateString() %> - <%= new Date(endDate).toLocaleDateString() %>
+    </div>
+  </div>
+
+  <!-- Performance Summary Table -->
+  <div class="card mb-4 avoid-break">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <h5 class="mb-0">Performance Summary</h5>
+      <button class="btn btn-sm btn-outline-primary no-print" onclick="exportTableToCSV('worker-performance.csv')">
+        <i class="bi bi-download"></i> Export to CSV
+      </button>
+    </div>
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table table-striped" id="performanceTable">
+          <thead>
+            <tr>
+              <th>Worker Name</th>
+              <th class="text-end">Total Sales</th>
+              <th class="text-end">Total Amount</th>
+              <th class="text-end">Average Sale Value</th>
+              <th class="text-end">Performance %</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if (workerPerformance && workerPerformance.length > 0) { %>
+              <% 
+                const maxAmount = Math.max(...workerPerformance.map(w => w.totalAmount));
+                workerPerformance.forEach(worker => { 
+                  const percentage = (worker.totalAmount / maxAmount * 100).toFixed(0);
+              %>
+                <tr>
+                  <td><%= worker.name %></td>
+                  <td class="text-end"><%= worker.totalSales %></td>
+                  <td class="text-end"><%= worker.totalAmount.toLocaleString('en-US', { style: 'currency', currency: 'PKR' }) %></td>
+                  <td class="text-end"><%= worker.averageSaleValue.toLocaleString('en-US', { style: 'currency', currency: 'PKR' }) %></td>
+                  <td class="text-end"><%= percentage %>%</td>
+                </tr>
+              <% }); %>
+            <% } else { %>
+              <tr>
+                <td colspan="5" class="text-center">No worker performance data found for the selected period</td>
+              </tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Performance Cards -->
+  <div class="row avoid-break">
+    <% if (workerPerformance && workerPerformance.length > 0) { %>
+      <% 
+        const maxAmount = Math.max(...workerPerformance.map(w => w.totalAmount));
+        workerPerformance.forEach(worker => { 
+          const percentage = (worker.totalAmount / maxAmount * 100).toFixed(0);
+      %>
+        <div class="col-md-4 mb-4">
+          <div class="card bg-light h-100">
+            <div class="card-header">
+              <h5 class="mb-0"><%= worker.name %></h5>
+            </div>
+            <div class="card-body">
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <div class="border rounded p-3 text-center">
+                    <h6 class="text-muted mb-1">Total Sales</h6>
+                    <h4 class="mb-0 text-primary"><%= worker.totalSales %></h4>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="border rounded p-3 text-center">
+                    <h6 class="text-muted mb-1">Total Amount</h6>
+                    <h4 class="mb-0 text-success"><%= worker.totalAmount.toLocaleString('en-US', { style: 'currency', currency: 'PKR' }) %></h4>
+                  </div>
+                </div>
+                <div class="col-12">
+                  <div class="border rounded p-3 text-center">
+                    <h6 class="text-muted mb-1">Average Sale Value</h6>
+                    <h4 class="mb-0 text-info"><%= worker.averageSaleValue.toLocaleString('en-US', { style: 'currency', currency: 'PKR' }) %></h4>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Performance Chart -->
+              <div class="mt-4">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <span class="text-muted">Performance</span>
+                  <span class="text-muted"><%= percentage %>%</span>
+                </div>
+                <div class="progress">
+                  <div class="progress-bar bg-success" role="progressbar" style="width: <%= percentage %>%" 
+                       aria-valuenow="<%= percentage %>" aria-valuemin="0" aria-valuemax="100"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      <% }); %>
+    <% } else { %>
+      <div class="col-12">
+        <div class="alert alert-info">
+          No worker performance data found for the selected period
+        </div>
+      </div>
+    <% } %>
+  </div>
+
+  <!-- Developer Credit -->
+  <div class="developer-credit d-none d-print-block">
+    Developed by Shaharyar • WhatsApp: 03009449098
+  </div>
+</div>
+
+<script>
+  function exportTableToCSV(filename) {
+    const table = document.getElementById('performanceTable');
+    let csv = [];
+    const rows = table.querySelectorAll('tr');
+    
+    for (let i = 0; i < rows.length; i++) {
+      const row = [], cols = rows[i].querySelectorAll('td, th');
+      
+      for (let j = 0; j < cols.length; j++) {
+        let text = cols[j].innerText.replace(/,/g, ' ');
+        row.push('"' + text + '"');
+      }
+      
+      csv.push(row.join(','));
+    }
+    
+    downloadCSV(csv.join('\n'), filename);
+  }
+  
+  function downloadCSV(csv, filename) {
+    const csvFile = new Blob([csv], {type: 'text/csv'});
+    const downloadLink = document.createElement('a');
+    downloadLink.download = filename;
+    downloadLink.href = window.URL.createObjectURL(csvFile);
+    downloadLink.style.display = 'none';
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+    document.body.removeChild(downloadLink);
+  }
+</script>
+
+<%- include('../partials/footer') %> 
